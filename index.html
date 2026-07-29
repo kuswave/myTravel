@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旅行行程查找</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getDatabase, ref, onValue }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcXO2hPsOX9NJCFJc1DPk5x2BjIcuiP7Q",
+    authDomain: "mytravel-3a97e.firebaseapp.com",
+    databaseURL: "https://mytravel-3a97e-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mytravel-3a97e",
+    storageBucket: "mytravel-3a97e.firebasestorage.app",
+    messagingSenderId: "68939613020",
+    appId: "1:68939613020:web:2e169f43a34cc4de29b799"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  window._fb = { db, ref, onValue };
+
+  function startApp() {
+    if (typeof window.onFirebaseReady === 'function') window.onFirebaseReady();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp);
+  else startApp();
+</script>
+
+<style>
+:root{
+  --paper:#FAF6EF; --paper-raised:#FFFFFF;
+  --ink:#262220; --ink-soft:#6b6259; --ink-mid:#8f8579;
+  --line:#DCD3C4; --line-soft:#EDE5D5;
+  --accent:#B5482E; --accent-soft:#FBEDE8;
+  --ok:#1C7C7C; --ok-soft:#E7F3F2;
+  --tag-bg:#EFE9DD;
+  --shadow:0 4px 14px rgba(38,34,32,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Noto Sans TC',-apple-system,sans-serif;
+  background:var(--paper); color:var(--ink);
+  font-size:14px; line-height:1.5;
+  padding-bottom:80px;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.disp{font-family:'Shippori Mincho',serif;font-weight:700;letter-spacing:.02em;}
+button{font-family:inherit;cursor:pointer;}
+input{font-family:inherit;font-size:14px;color:var(--ink);}
+a{color:var(--ok);text-decoration:none;}
+
+/* Header */
+header.top{padding:20px 16px 8px;max-width:1080px;margin:0 auto;}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:4px;}
+h1{font-size:clamp(24px,5vw,34px);margin:0 0 4px;}
+.sub{color:var(--ink-soft);font-size:13px;margin-bottom:16px;}
+
+/* Mode tabs */
+.mode-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.mode-tab{
+  padding:9px 18px;font-size:13.5px;font-weight:600;
+  border:1.5px solid var(--line);background:var(--paper-raised);
+  color:var(--ink-soft);border-radius:22px;
+  transition:all .12s ease;letter-spacing:.02em;
+}
+.mode-tab.active{border-color:var(--ink);background:var(--ink);color:var(--paper);}
+.mode-tab:hover:not(.active){color:var(--ink);border-color:var(--ink-soft);}
+
+/* Line map nav (itinerary mode only) */
+.linewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 16px;}
+.line{position:relative;display:flex;align-items:flex-start;min-width:100%;padding:0 8px;}
+.line::before{content:"";position:absolute;top:15px;left:24px;right:24px;height:3px;background:var(--line);z-index:0;}
+.stop{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;background:none;border:none;padding:0;min-width:70px;}
+.dot{width:32px;height:32px;border-radius:50%;background:var(--paper-raised);
+  border:3px solid var(--ink-soft);display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--ink-soft);transition:transform .15s ease,background .15s ease;}
+.stop[aria-pressed="true"] .dot{background:var(--ink);border-color:var(--ink);color:var(--paper);transform:scale(1.15);}
+.stop:hover .dot{transform:scale(1.08);}
+.stoplabel{margin-top:8px;font-size:11px;color:var(--ink-soft);text-align:center;max-width:80px;line-height:1.35;}
+.stopdate{display:block;font-size:10px;font-weight:600;margin-top:2px;}
+
+/* Search / filter bar */
+.container{max-width:1080px;margin:0 auto;padding:0 16px;}
+.searchrow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.searchrow input{
+  flex:1;min-width:200px;
+  padding:11px 14px;border:2px solid var(--ink);
+  background:var(--paper-raised);border-radius:2px;
+}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.chip{
+  padding:5px 12px;font-size:12px;
+  border:1.5px solid var(--line);border-radius:20px;
+  background:var(--paper-raised);color:var(--ink-soft);cursor:pointer;
+  transition:all .12s ease;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.chip.active{border-color:var(--ink);background:var(--ink);color:var(--paper);}
+.chip.region{border-color:var(--ok);color:var(--ok);}
+.chip.region.active{background:var(--ok);color:#fff;border-color:var(--ok);}
+.chip .cdot{
+  display:inline-block;width:9px;height:9px;border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;
+}
+.chip.active .cdot{border-color:rgba(255,255,255,.4);}
+
+/* Day header (itinerary mode) */
+.day-block{margin-bottom:28px;}
+.day-header{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;
+  border-bottom:2px solid var(--ink);padding-bottom:6px;}
+.day-header h2{margin:0;font-size:20px;}
+.day-header .date{color:var(--ink-soft);font-size:13px;}
+.slot-block{margin-bottom:22px;}
+.slot-title{font-size:12.5px;font-weight:700;color:var(--accent);letter-spacing:.06em;
+  margin-bottom:10px;text-transform:uppercase;}
+.slot-transit{font-size:12px;color:var(--ink-soft);background:var(--tag-bg);
+  padding:6px 10px;border-radius:3px;margin-bottom:12px;}
+
+/* Place card grid - side-by-side layout (image left, info right) */
+.place-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:900px){.place-grid{grid-template-columns:repeat(2,1fr);}}
+
+.pcard{
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  border-left:5px solid var(--dcolor,var(--accent));
+  border-radius:4px;
+  overflow:hidden;
+  transition:box-shadow .15s ease,transform .15s ease;
+  display:grid;
+  grid-template-columns:40% 1fr;
+  min-height:180px;
+}
+/* No-image cards: single column, full width */
+.pcard.no-image{grid-template-columns:1fr;min-height:0;}
+/* Mobile portrait: force stacked layout */
+@media(max-width:500px){
+  .pcard{grid-template-columns:1fr;min-height:0;}
+}
+
+.pcard.alt{border-left-style:dashed;border-left-color:var(--dcolor,var(--ok));opacity:.92;}
+.pcard:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
+
+/* Left: image */
+.pcard-image{
+  overflow:hidden;
+  background:var(--line-soft);
+  border-right:1px solid var(--line-soft);
+  min-height:180px;
+}
+.pcard-image img{width:100%;height:100%;object-fit:cover;display:block;}
+@media(max-width:500px){
+  .pcard-image{
+    aspect-ratio:16/10;min-height:0;
+    border-right:none;
+    border-bottom:1px solid var(--line-soft);
+  }
+}
+
+/* Right: info (top) + notes (bottom) */
+.pcard-right{
+  display:flex;flex-direction:column;
+  min-width:0; /* allow text truncation inside flex/grid */
+}
+.pcard-top{padding:14px 16px 12px;}
+.pcard-title-row{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:10px;margin-bottom:10px;
+}
+.ptitle{
+  margin:0;font-size:20px;font-family:'Shippori Mincho',serif;
+  font-weight:700;line-height:1.3;flex:1;
+}
+.pcard-gmap{
+  padding:6px 12px;font-size:12px;font-weight:600;
+  border:1.5px solid var(--dcolor,var(--ink));
+  color:var(--dcolor,var(--ink));
+  border-radius:3px;white-space:nowrap;flex-shrink:0;
+  transition:all .12s ease;
+}
+.pcard-gmap:hover{background:var(--dcolor,var(--ink));color:#fff !important;text-decoration:none;}
+
+/* Other reference links */
+.pcard-links{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;
+}
+.pcard-link{
+  padding:3px 9px;font-size:11px;font-weight:500;
+  border:1px solid var(--line);color:var(--ink-soft);
+  background:var(--paper);border-radius:20px;
+  white-space:nowrap;transition:all .12s ease;
+}
+.pcard-link:hover{border-color:var(--ink);color:var(--ink);text-decoration:none;background:var(--paper-raised);}
+.ptags{display:flex;flex-wrap:wrap;gap:5px;}
+.tagpill{
+  font-size:12px;padding:3px 10px;border-radius:20px;
+  background:var(--tag-bg);color:var(--ink-soft);
+  font-weight:500;
+}
+.tagpill.region{background:var(--ok-soft);color:var(--ok);}
+.pmeta{font-size:12.5px;color:var(--ink-soft);line-height:1.55;margin-top:8px;}
+
+/* Notes area (bottom of right column, or bottom of card if no image) */
+.pcard-notes{
+  padding:12px 16px;font-size:13px;line-height:1.65;color:var(--ink);
+  background:var(--paper);
+  border-top:1px dashed var(--line);
+  flex:1;
+}
+
+/* Alternatives */
+.altbanner{
+  font-size:12px;color:var(--ok);font-weight:600;margin:10px 0;
+  display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+}
+.altbanner::before{content:"▸";display:inline-block;transition:transform .12s ease;}
+.altbanner.open::before{transform:rotate(90deg);}
+.altwrap{display:none;padding-left:2px;border-left:2px dashed var(--ok);margin-left:4px;padding:8px 0 8px 12px;}
+.altwrap.open{display:block;}
+
+/* Alternative group header */
+.alt-group-header{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--ink);
+  margin:14px 0 8px;padding:5px 12px;
+  background:var(--paper-raised);
+  border-left:3px solid var(--dcolor,var(--ok));
+  border-radius:2px;
+  font-family:'Shippori Mincho',serif;
+}
+.alt-group-header:first-child{margin-top:0;}
+.alt-group-count{
+  font-size:11px;font-weight:500;color:var(--ink-soft);
+  margin-left:auto;font-family:'Noto Sans TC',sans-serif;
+}
+.alt-group-header .cdot{
+  display:inline-block;width:10px;height:10px;border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;
+}
+
+/* Image lightbox */
+.pcard-image img{cursor:zoom-in;}
+.lightbox{
+  position:fixed;inset:0;background:rgba(0,0,0,.88);
+  z-index:200;display:none;
+  align-items:center;justify-content:center;
+  padding:20px;cursor:zoom-out;
+}
+.lightbox.open{display:flex;}
+.lightbox img{
+  max-width:100%;max-height:100%;
+  object-fit:contain;border-radius:3px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+.lightbox-hint{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,.7);font-size:11px;letter-spacing:.05em;
+}
+
+/* Search view */
+.search-view-header{
+  font-size:13px;color:var(--ink-soft);
+  margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid var(--line);
+}
+.search-view-header strong{color:var(--ink);font-weight:700;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--ink-soft);font-size:14px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow" id="tripEyebrow">Trip Planner</div>
+  <h1 id="tripTitle">行程查找</h1>
+  <div class="sub" id="tripSub">Loading…</div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="itinerary" onclick="setMode('itinerary')">📋 我的行程</button>
+    <button class="mode-tab" data-mode="search" onclick="setMode('search')">🔍 查找景點</button>
+  </div>
+
+  <div class="linewrap" id="linewrap"><div class="line" id="lineMap"></div></div>
+</header>
+
+<div class="container">
+  <div class="searchrow">
+    <input type="text" id="searchInput" placeholder="搜尋景點名稱、備註、標籤…" oninput="onSearch(event)">
+  </div>
+  <div class="chips" id="typeChips"></div>
+  <div class="chips" id="regionChips"></div>
+  <div id="content"></div>
+  <div class="empty" id="emptyState" style="display:none;">尚無資料。</div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" alt="">
+  <div class="lightbox-hint">點任意處或按 ESC 關閉</div>
+</div>
+
+<script>
+const state = {
+  mode: 'itinerary',   // 'itinerary' | 'search'
+  trip: null,
+  places: [],
+  tags: [],
+  days: [],
+  activeDay: null,
+  activeTypes: new Set(),
+  activeRegions: new Set(),
+  query: '',
+  openAlts: new Set()
+};
+
+window.onFirebaseReady = function() {
+  const { db, ref, onValue } = window._fb;
+
+  onValue(ref(db, 'trip'), snap => {
+    state.trip = snap.val() || null;
+    renderHeader();
+  });
+  onValue(ref(db, 'places'), snap => {
+    const data = snap.val() || {};
+    state.places = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+    render();
+  });
+  onValue(ref(db, 'tags'), snap => {
+    const data = snap.val() || {};
+    state.tags = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+    renderChips();
+    render(); // Re-render places since color may have changed
+  });
+  onValue(ref(db, 'days'), snap => {
+    const data = snap.val() || {};
+    state.days = Object.entries(data).map(([id, v]) => {
+      const slotsObj = v.slots || {};
+      const slots = Object.entries(slotsObj).map(([sid, sv]) => ({ id: sid, ...sv }))
+        .sort((a,b) => (a.order||0) - (b.order||0));
+      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots };
+    }).sort((a,b) => (a.order||0) - (b.order||0));
+    renderLineMap();
+    render();
+  });
+};
+
+function setMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+  document.getElementById('linewrap').style.display = mode === 'itinerary' ? '' : 'none';
+  render();
+}
+window.setMode = setMode;
+
+function renderHeader() {
+  const t = state.trip;
+  if (!t) return;
+  document.getElementById('tripTitle').textContent = t.title || '行程查找';
+  document.getElementById('tripEyebrow').textContent = t.eyebrow || 'Trip Planner';
+  document.getElementById('tripSub').textContent = t.subtitle || '';
+}
+
+function renderLineMap() {
+  const el = document.getElementById('lineMap');
+  el.innerHTML = '';
+
+  const all = document.createElement('button');
+  all.className = 'stop';
+  all.setAttribute('aria-pressed', state.activeDay === null ? 'true' : 'false');
+  all.innerHTML = `<span class="dot">全</span><span class="stoplabel">全部</span>`;
+  all.onclick = () => { state.activeDay = null; renderLineMap(); render(); };
+  el.appendChild(all);
+
+  state.days.forEach(day => {
+    const btn = document.createElement('button');
+    btn.className = 'stop';
+    btn.setAttribute('aria-pressed', state.activeDay === day.id ? 'true' : 'false');
+    const dateStr = day.date ? formatDate(day.date) : '';
+    btn.innerHTML = `<span class="dot">${day.dayNumber ?? ''}</span>
+      <span class="stoplabel">Day ${day.dayNumber ?? ''}${dateStr ? `<span class="stopdate">${dateStr}</span>` : ''}</span>`;
+    btn.onclick = () => {
+      state.activeDay = state.activeDay === day.id ? null : day.id;
+      renderLineMap(); render();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderChips() {
+  const typeBox = document.getElementById('typeChips');
+  const regionBox = document.getElementById('regionChips');
+  typeBox.innerHTML = ''; regionBox.innerHTML = '';
+  state.tags.filter(t => t.category === 'type').forEach(t => {
+    typeBox.appendChild(makeChip(t.name, 'type', state.activeTypes, t.color));
+  });
+  state.tags.filter(t => t.category === 'region').forEach(t => {
+    regionBox.appendChild(makeChip(t.name, 'region', state.activeRegions));
+  });
+}
+function makeChip(name, kind, activeSet, color) {
+  const chip = document.createElement('button');
+  chip.className = `chip ${kind}` + (activeSet.has(name) ? ' active' : '');
+  if (kind === 'type' && color) {
+    chip.innerHTML = `<span class="cdot" style="background:${color}"></span>${esc(name)}`;
+  } else {
+    chip.textContent = name;
+  }
+  chip.onclick = () => {
+    activeSet.has(name) ? activeSet.delete(name) : activeSet.add(name);
+    renderChips(); render();
+  };
+  return chip;
+}
+
+/* Get the accent color for a place - first colored type tag wins */
+function getPlaceColor(place) {
+  const typeTags = place.typeTags || [];
+  for (const tagName of typeTags) {
+    const tag = state.tags.find(t => t.category === 'type' && t.name === tagName);
+    if (tag && tag.color) return tag.color;
+  }
+  return null;
+}
+
+function typeTagPill(name) {
+  const tag = state.tags.find(t => t.category === 'type' && t.name === name);
+  const color = tag?.color;
+  if (color) {
+    return `<span class="tagpill" style="background:${color};color:#fff;">${esc(name)}</span>`;
+  }
+  return `<span class="tagpill">${esc(name)}</span>`;
+}
+
+function regionTagPill(name) {
+  return `<span class="tagpill region">${esc(name)}</span>`;
+}
+
+// Known-domain → display name mapping
+const LINK_NAME_MAP = [
+  { pattern: /kkday\.com/i,             name: '🎟 KKday' },
+  { pattern: /klook\.com/i,             name: '🎟 Klook' },
+  { pattern: /tripadvisor\./i,          name: '⭐ TripAdvisor' },
+  { pattern: /booking\.com/i,           name: '🏨 Booking' },
+  { pattern: /agoda\.com/i,             name: '🏨 Agoda' },
+  { pattern: /expedia\./i,              name: '🏨 Expedia' },
+  { pattern: /rakuten-travel|travel\.rakuten/i, name: '🏨 樂天旅遊' },
+  { pattern: /jalan\.net/i,             name: '🏨 じゃらん' },
+  { pattern: /(instagram|ig)\.com/i,    name: '📷 Instagram' },
+  { pattern: /(youtube|youtu\.be)/i,    name: '▶ YouTube' },
+  { pattern: /tabelog\.com/i,           name: '🍜 Tabelog' },
+  { pattern: /gurunavi\.com/i,          name: '🍜 ぐるなび' },
+  { pattern: /matcha-jp\.com/i,         name: '📖 MATCHA' },
+  { pattern: /pixnet\.net/i,            name: '📖 痞客邦' },
+  { pattern: /medium\.com/i,            name: '📖 Medium' },
+  { pattern: /line\.me|lin\.ee/i,       name: '💬 LINE' },
+];
+
+function linkDisplayName(url) {
+  for (const { pattern, name } of LINK_NAME_MAP) {
+    if (pattern.test(url)) return name;
+  }
+  // Fallback: use domain name (strip www., take base)
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    // Truncate super-long domains
+    return '🔗 ' + (host.length > 24 ? host.slice(0, 22) + '…' : host);
+  } catch {
+    return '🔗 連結';
+  }
+}
+
+function render() {
+  if (state.mode === 'itinerary') {
+    renderItineraryView();
+  } else {
+    renderSearchView();
+  }
+}
+
+function renderItineraryView() {
+  const content = document.getElementById('content');
+  const empty = document.getElementById('emptyState');
+  content.innerHTML = '';
+
+  const daysToShow = state.activeDay ? state.days.filter(d => d.id === state.activeDay) : state.days;
+  if (daysToShow.length === 0) { empty.style.display = 'block'; empty.textContent = '尚未建立行程內容。'; return; }
+  empty.style.display = 'none';
+
+  daysToShow.forEach(day => {
+    const dayBlock = document.createElement('div');
+    dayBlock.className = 'day-block';
+    dayBlock.innerHTML = `
+      <div class="day-header">
+        <h2>Day ${day.dayNumber ?? ''}</h2>
+        ${day.date ? `<span class="date">${formatDate(day.date)}</span>` : ''}
+      </div>`;
+    day.slots.forEach(slot => dayBlock.appendChild(renderSlot(slot)));
+    content.appendChild(dayBlock);
+  });
+}
+
+function renderSearchView() {
+  const content = document.getElementById('content');
+  const empty = document.getElementById('emptyState');
+  content.innerHTML = '';
+
+  const filtered = state.places.filter(passesFilters);
+
+  const header = document.createElement('div');
+  header.className = 'search-view-header';
+  const total = state.places.length;
+  const filterActive = state.query || state.activeTypes.size > 0 || state.activeRegions.size > 0;
+  header.innerHTML = filterActive
+    ? `符合條件的景點：<strong>${filtered.length}</strong> / ${total}`
+    : `景點資料庫共 <strong>${total}</strong> 個景點`;
+  content.appendChild(header);
+
+  if (filtered.length === 0) {
+    empty.style.display = 'block';
+    empty.textContent = filterActive ? '沒有符合條件的景點' : '尚無景點資料';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const grid = document.createElement('div');
+  grid.className = 'place-grid';
+  filtered.forEach(p => grid.appendChild(renderPlaceCard(p, false)));
+  content.appendChild(grid);
+}
+
+function renderSlot(slot) {
+  const div = document.createElement('div');
+  div.className = 'slot-block';
+
+  const selected = (slot.placeIds || [])
+    .map(pid => state.places.find(p => p.id === pid)).filter(Boolean)
+    .filter(passesFilters);
+  const alts = computeAlternatives(slot);
+
+  div.innerHTML = `
+    <div class="slot-title">${esc(slot.label || '')}</div>
+    ${slot.transitFromPrevious ? `<div class="slot-transit">🚉 ${esc(slot.transitFromPrevious)}</div>` : ''}
+  `;
+
+  if (selected.length === 0 && !state.query && state.activeTypes.size === 0 && state.activeRegions.size === 0) {
+    const p = document.createElement('div');
+    p.className = 'empty'; p.style.padding = '16px'; p.textContent = '此時段尚未安排景點';
+    div.appendChild(p);
+  } else if (selected.length > 0) {
+    const grid = document.createElement('div');
+    grid.className = 'place-grid';
+    selected.forEach(p => grid.appendChild(renderPlaceCard(p, false)));
+    div.appendChild(grid);
+  }
+
+  if (alts.length > 0) {
+    const totalAlts = alts.reduce((sum, g) => sum + g.places.length, 0);
+    const banner = document.createElement('div');
+    banner.className = 'altbanner' + (state.openAlts.has(slot.id) ? ' open' : '');
+    banner.textContent = `此時段的其他選擇（${totalAlts}）`;
+    banner.onclick = () => {
+      state.openAlts.has(slot.id) ? state.openAlts.delete(slot.id) : state.openAlts.add(slot.id);
+      render();
+    };
+    div.appendChild(banner);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'altwrap' + (state.openAlts.has(slot.id) ? ' open' : '');
+    alts.forEach(({ type, places }) => {
+      const header = document.createElement('div');
+      header.className = 'alt-group-header';
+      const tag = state.tags.find(t => t.category === 'type' && t.name === type);
+      const color = tag?.color;
+      if (color) header.style.setProperty('--dcolor', color);
+      const dot = color ? `<span class="cdot" style="background:${color}"></span>` : '';
+      header.innerHTML = `${dot}${esc(type)}<span class="alt-group-count">${places.length}</span>`;
+      wrap.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = 'place-grid';
+      places.forEach(p => grid.appendChild(renderPlaceCard(p, true)));
+      wrap.appendChild(grid);
+    });
+    div.appendChild(wrap);
+  }
+  return div;
+}
+
+function renderPlaceCard(p, isAlt) {
+  const div = document.createElement('div');
+  const hasImage = !!p.imageBase64;
+  div.className = 'pcard' + (isAlt ? ' alt' : '') + (hasImage ? '' : ' no-image');
+
+  const color = getPlaceColor(p);
+  if (color) div.style.setProperty('--dcolor', color);
+
+  const regionTags = (p.regionTags||[]).map(regionTagPill).join('');
+  const typeTags = (p.typeTags||[]).map(typeTagPill).join('');
+
+  const gmapHref = p.gmapUrl
+    || (p.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}` : null);
+  const gmapBtn = gmapHref
+    ? `<a class="pcard-gmap" href="${escAttr(gmapHref)}" target="_blank" rel="noopener">📍 Google Maps</a>`
+    : '';
+
+  const otherLinks = (p.otherLinks || []).filter(l => /^https?:\/\//i.test(l));
+  const linksHtml = otherLinks.length > 0
+    ? `<div class="pcard-links">${otherLinks.map(url =>
+        `<a class="pcard-link" href="${escAttr(url)}" target="_blank" rel="noopener">${esc(linkDisplayName(url))}</a>`
+      ).join('')}</div>`
+    : '';
+
+  const topSection = `
+    <div class="pcard-top">
+      <div class="pcard-title-row">
+        <h3 class="ptitle">${esc(p.name)}</h3>
+        ${gmapBtn}
+      </div>
+      <div class="ptags">${regionTags}${typeTags}</div>
+      ${p.transitTime ? `<div class="pmeta">🚉 ${esc(p.transitTime)}</div>` : ''}
+      ${linksHtml}
+    </div>`;
+
+  const notesSection = p.notes
+    ? `<div class="pcard-notes">${esc(p.notes).replace(/\n/g,'<br>')}</div>`
+    : '';
+
+  if (hasImage) {
+    // Two-column layout: image | (top + notes)
+    div.innerHTML = `
+      <div class="pcard-image"><img src="${escAttr(p.imageBase64)}" alt=""></div>
+      <div class="pcard-right">
+        ${topSection}
+        ${notesSection}
+      </div>`;
+  } else {
+    // Single-column full-width layout
+    div.innerHTML = topSection + notesSection;
+  }
+  return div;
+}
+
+function passesFilters(place) {
+  if (state.query) {
+    const hay = [place.name, place.address, place.notes, place.transitTime,
+      ...(place.typeTags||[]), ...(place.regionTags||[])].join(' ').toLowerCase();
+    if (!hay.includes(state.query.toLowerCase())) return false;
+  }
+  if (state.activeTypes.size > 0 && !(place.typeTags||[]).some(t => state.activeTypes.has(t))) return false;
+  if (state.activeRegions.size > 0 && !(place.regionTags||[]).some(t => state.activeRegions.has(t))) return false;
+  return true;
+}
+
+function computeAlternatives(slot) {
+  const selectedIds = new Set(slot.placeIds || []);
+  const selected = (slot.placeIds || []).map(pid => state.places.find(p => p.id === pid)).filter(Boolean);
+  // Region intersection: union of all regions from selected places in this slot
+  const wantRegions = new Set();
+  selected.forEach(p => (p.regionTags||[]).forEach(t => wantRegions.add(t)));
+  if (wantRegions.size === 0) return [];
+
+  const candidates = state.places.filter(p => {
+    if (selectedIds.has(p.id)) return false;
+    if (!passesFilters(p)) return false;
+    return (p.regionTags||[]).some(t => wantRegions.has(t));
+  });
+
+  // Group each place by its FIRST type tag (primary type)
+  const groups = new Map();
+  candidates.forEach(p => {
+    const primary = (p.typeTags && p.typeTags[0]) || '（未分類）';
+    if (!groups.has(primary)) groups.set(primary, []);
+    groups.get(primary).push(p);
+  });
+
+  // Sort groups by size desc
+  return [...groups.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([type, places]) => ({ type, places }));
+}
+
+function onSearch(e) { state.query = e.target.value.trim(); render(); }
+
+/* Lightbox */
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxImg').src = '';
+}
+document.addEventListener('click', (e) => {
+  const img = e.target.closest('.pcard-image img');
+  if (img) {
+    e.preventDefault();
+    openLightbox(img.src);
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLightbox();
+});
+window.closeLightbox = closeLightbox;
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) { return esc(s); }
+function formatDate(d) {
+  if (!d) return '';
+  const m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${+m[2]}/${+m[3]}` : d;
+}
+
+window.onSearch = onSearch;
+</script>
+</body>
+</html>

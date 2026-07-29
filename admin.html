@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行程規劃 · 後臺</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  import { getDatabase, ref, onValue, push, set, update, remove, get, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcXO2hPsOX9NJCFJc1DPk5x2BjIcuiP7Q",
+    authDomain: "mytravel-3a97e.firebaseapp.com",
+    databaseURL: "https://mytravel-3a97e-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "mytravel-3a97e",
+    storageBucket: "mytravel-3a97e.firebasestorage.app",
+    messagingSenderId: "68939613020",
+    appId: "1:68939613020:web:2e169f43a34cc4de29b799"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  window._fb = {
+    auth, db,
+    signInWithEmailAndPassword, signOut, onAuthStateChanged,
+    ref, onValue, push, set, update, remove, get, serverTimestamp
+  };
+
+  function startApp() {
+    if (typeof window.onFirebaseReady === 'function') window.onFirebaseReady();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp);
+  else startApp();
+</script>
+
+<style>
+:root{
+  --paper:#FAF6EF; --paper-raised:#FFFFFF;
+  --ink:#262220; --ink-soft:#6b6259; --ink-mid:#8f8579;
+  --line:#DCD3C4; --line-soft:#EDE5D5;
+  --accent:#B5482E; --accent-soft:#FBEDE8;
+  --ok:#1C7C7C; --ok-soft:#E7F3F2;
+  --warn:#B5482E; --warn-soft:#FBEDE8;
+  --tag-bg:#EFE9DD;
+  --shadow:0 4px 14px rgba(38,34,32,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Noto Sans TC',-apple-system,sans-serif;
+  background:var(--paper); color:var(--ink);
+  font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.disp{font-family:'Shippori Mincho',serif;font-weight:700;letter-spacing:.02em;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);}
+a{color:var(--ok);text-decoration:none;}
+
+/* ─── Login Screen ─── */
+#loginScreen{
+  position:fixed;inset:0;
+  background:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  z-index:999; padding:20px;
+  transition:opacity .35s ease;
+}
+#loginScreen.hidden{opacity:0;pointer-events:none;}
+.login-box{
+  width:100%;max-width:360px;
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:32px 28px;
+  box-shadow:var(--shadow);
+  animation:slideUp .4s ease both;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.login-title{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+.login-eyebrow{font-size:10.5px;letter-spacing:.24em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:24px;}
+.login-box input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid var(--line);border-radius:4px;
+  background:var(--paper);margin-bottom:12px;
+}
+.login-box input:focus{outline:none;border-color:var(--ink);}
+.btn-login{
+  width:100%;padding:12px;
+  background:var(--ink);color:var(--paper);
+  border:none;border-radius:4px;
+  font-size:14px;font-weight:600;letter-spacing:.05em;
+  margin-top:8px;
+}
+.btn-login:hover{opacity:.9;}
+.btn-login:disabled{opacity:.5;cursor:wait;}
+.login-err{color:var(--warn);font-size:12px;margin-top:12px;min-height:16px;}
+
+/* ─── Shell ─── */
+#shell{display:none;}
+#shell.ready{display:block;}
+.top-bar{
+  padding:16px 20px;
+  border-bottom:1px solid var(--line);
+  background:var(--paper-raised);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.brand{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;margin-right:auto;}
+.brand small{font-family:'Noto Sans TC',sans-serif;font-size:10.5px;font-weight:400;
+  letter-spacing:.15em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:2px;}
+.user-info{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;}
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:8px 14px;font-size:13px;font-weight:600;
+  border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);
+  border-radius:3px;transition:all .12s ease;
+}
+.btn:hover{background:transparent;color:var(--ink);}
+.btn.ghost{background:transparent;color:var(--ink);}
+.btn.ghost:hover{background:var(--ink);color:var(--paper);}
+.btn.small{padding:5px 11px;font-size:12px;}
+.btn.danger{border-color:var(--warn);background:var(--warn);color:#fff;}
+.btn.danger:hover{background:transparent;color:var(--warn);}
+.btn.mini{padding:3px 8px;font-size:11px;}
+
+.container{max-width:1080px;margin:0 auto;padding:20px 16px 80px;}
+
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:20px;overflow-x:auto;}
+.tab{
+  padding:10px 18px;font-size:14px;font-weight:600;
+  border:none;background:transparent;color:var(--ink-soft);cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;
+}
+.tab.active{color:var(--ink);border-bottom-color:var(--ink);}
+.tab:hover{color:var(--ink);}
+
+.section{background:var(--paper-raised);border:1px solid var(--line);border-radius:5px;padding:16px;margin-bottom:14px;}
+.section h3{margin:0 0 12px;font-size:15px;font-family:'Shippori Mincho',serif;}
+.form-row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px;}
+@media(min-width:640px){.form-row.two{grid-template-columns:1fr 1fr;}}
+label{font-size:11.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px;letter-spacing:.02em;}
+input[type=text],input[type=email],input[type=password],input[type=url],input[type=date],textarea,select{
+  width:100%;padding:9px 11px;border:1.5px solid var(--line);
+  background:var(--paper);border-radius:3px;color:var(--ink);
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--ink);}
+textarea{resize:vertical;min-height:60px;font-family:inherit;}
+.hint{font-size:11px;color:var(--ink-soft);margin-top:4px;}
+
+.taglist{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.tagchip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 11px;font-size:12px;border-radius:20px;
+  background:var(--tag-bg);color:var(--ink-soft);border:1.5px solid transparent;cursor:pointer;
+  transition:all .12s ease;
+}
+.tagchip.selected{background:var(--ink);color:var(--paper);}
+.tagchip.region.selected{background:var(--ok);color:#fff;}
+.tagchip .x{margin-left:2px;font-size:10px;opacity:.55;padding:0 3px;line-height:1;}
+.tagchip .x:hover{opacity:1;}
+.tagchip .badge{
+  display:inline-block;background:rgba(0,0,0,.15);color:inherit;font-size:9.5px;
+  padding:1px 6px;border-radius:10px;margin-left:2px;font-weight:600;
+}
+.tagchip.selected .badge{background:rgba(255,255,255,.25);}
+.newtag-input{
+  padding:5px 11px;font-size:12px;border-radius:20px;
+  border:1.5px dashed var(--line);background:transparent;
+  color:var(--ink);width:120px;
+}
+
+.place-item{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft);}
+.place-item:last-child{border-bottom:none;}
+.place-item .info{flex:1;min-width:0;}
+.place-item .name{font-weight:700;margin-bottom:4px;font-size:14px;}
+.place-item .meta{font-size:11.5px;color:var(--ink-soft);margin-top:3px;line-height:1.5;}
+.place-item .actions{display:flex;gap:5px;flex-shrink:0;}
+
+.tagpill{font-size:10.5px;padding:2px 8px;border-radius:20px;background:var(--tag-bg);color:var(--ink-soft);display:inline-block;margin:1px 2px 1px 0;}
+.tagpill.region{background:var(--ok-soft);color:var(--ok);}
+
+.day-editor{background:var(--paper-raised);border:1px solid var(--line);
+  border-radius:5px;padding:14px;margin-bottom:12px;}
+.day-editor-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.day-editor-header .drag{cursor:grab;color:var(--ink-mid);font-size:18px;user-select:none;padding:0 4px;}
+.day-editor-header input[type=text]{max-width:80px;padding:6px 9px;}
+.day-editor-header input[type=date]{max-width:170px;padding:6px 9px;}
+.day-editor-header .day-lbl{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;}
+
+.slot-editor{border-left:3px solid var(--accent);padding:8px 12px 10px;margin-bottom:10px;background:var(--paper);border-radius:2px;}
+.slot-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.slot-head .drag{cursor:grab;color:var(--ink-mid);font-size:16px;user-select:none;}
+.slot-head input.slot-label{max-width:130px;font-weight:700;padding:5px 8px;}
+.slot-transit{width:100%;font-size:12px;margin:4px 0 6px;padding:5px 8px;}
+.slot-places{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0;}
+.slot-place-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;font-size:12px;
+  background:var(--tag-bg);border-radius:20px;
+}
+.slot-place-pill .x{color:var(--warn);cursor:pointer;font-weight:700;padding:0 2px;line-height:1;}
+
+/* Picker modal */
+.picker{
+  position:fixed;inset:0;background:rgba(38,34,32,.5);z-index:100;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.picker.open{display:flex;}
+.picker-inner{
+  background:var(--paper-raised);border-radius:6px;
+  max-width:560px;width:100%;max-height:85vh;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.picker-head{padding:14px 16px;border-bottom:1px solid var(--line);}
+.picker-head input{width:100%;margin-bottom:10px;}
+.picker-head .chips{display:flex;flex-wrap:wrap;gap:5px;}
+.picker-body{overflow-y:auto;flex:1;padding:8px 16px;}
+.picker-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.picker-foot .count{font-size:12px;color:var(--ink-soft);}
+.picker-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line-soft);cursor:pointer;}
+.picker-item:last-child{border-bottom:none;}
+.picker-item input{margin-top:3px;flex-shrink:0;}
+.picker-item .info{flex:1;min-width:0;}
+.picker-item .name{font-weight:600;font-size:13.5px;margin-bottom:3px;}
+.picker-item .meta{font-size:11px;color:var(--ink-soft);}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  padding:10px 18px;background:var(--ink);color:var(--paper);
+  border-radius:20px;font-size:13px;z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .2s ease;
+}
+.toast.show{opacity:1;}
+.empty{text-align:center;padding:32px 20px;color:var(--ink-soft);font-size:13px;}
+
+/* Image upload preview */
+.image-upload{margin-top:4px;}
+.image-preview{
+  width:120px;height:120px;
+  border:1.5px solid var(--line);
+  border-radius:4px;background:var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;margin-bottom:8px;
+}
+.image-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.image-preview .no-image{font-size:11px;color:var(--ink-soft);}
+
+/* Place list thumbnail */
+.place-item .thumb{
+  width:48px;height:48px;
+  border-radius:4px;background:var(--line-soft);
+  flex-shrink:0;overflow:hidden;
+}
+.place-item .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* Draggable place pills in slot */
+.slot-places{min-height:8px;}
+.slot-place-pill{cursor:grab;user-select:none;}
+.slot-place-pill:active{cursor:grabbing;}
+.slot-place-pill.sortable-chosen{background:var(--accent-soft);color:var(--accent);}
+.slot-place-pill.sortable-ghost{opacity:.4;}
+
+/* Color dot indicator */
+.cdot{
+  display:inline-block;width:10px;height:10px;
+  border-radius:50%;vertical-align:middle;
+  margin-right:4px;border:1.5px solid rgba(0,0,0,.12);
+  flex-shrink:0;
+}
+.cdot.empty{background:transparent;border-style:dashed;border-color:var(--ink-mid);}
+.tagchip{align-items:center;}
+.tagchip.selected .cdot{border-color:rgba(255,255,255,.4);}
+
+/* Color picker modal */
+.color-picker{
+  position:fixed;inset:0;background:rgba(38,34,32,.5);z-index:150;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.color-picker.open{display:flex;}
+.cp-inner{
+  background:var(--paper-raised);border-radius:6px;
+  max-width:420px;width:100%;padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+.cp-head{font-family:'Shippori Mincho',serif;font-size:15px;margin-bottom:14px;}
+.cp-head strong{color:var(--accent);}
+.cp-swatches{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  margin-bottom:14px;
+}
+.cp-swatch{
+  height:44px;border-radius:4px;
+  border:3px solid transparent;cursor:pointer;position:relative;
+  transition:transform .12s ease;padding:0;
+}
+.cp-swatch:hover{transform:scale(1.05);}
+.cp-swatch.active{border-color:var(--ink);}
+.cp-swatch .check{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:bold;font-size:18px;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);opacity:0;pointer-events:none;
+}
+.cp-swatch.active .check{opacity:1;}
+.cp-swatch.used{opacity:.55;}
+.cp-custom{
+  border-top:1px solid var(--line);padding-top:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.cp-custom label{margin:0;white-space:nowrap;font-size:12px;}
+.cp-custom input{flex:1;font-family:'DM Mono',ui-monospace,monospace;}
+.cp-preview{
+  width:28px;height:28px;border-radius:4px;
+  border:1px solid var(--line);
+}
+.cp-foot{display:flex;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.cp-foot .cp-actions{display:flex;gap:6px;}
+
+/* Ordered type tag list (drag to reorder priority) */
+.ordered-selection{
+  margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--line);
+}
+.ordered-selection .ord-label{
+  font-size:11px;color:var(--ink-soft);margin-bottom:6px;
+  font-weight:600;letter-spacing:.02em;
+}
+.ordered-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.ordered-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;background:var(--ink);color:var(--paper);
+  border-radius:20px;font-size:12px;font-weight:500;
+  cursor:grab;user-select:none;
+  transition:background .12s ease;
+}
+.ordered-tag:active{cursor:grabbing;}
+.ordered-tag .drag-h{color:rgba(255,255,255,.45);font-size:11px;line-height:1;}
+.ordered-tag .cdot{margin-right:0;}
+.ordered-tag .first-badge{
+  background:var(--accent);color:#fff;font-size:10px;
+  padding:1px 6px;border-radius:8px;margin-left:2px;font-weight:700;
+}
+.ordered-tag.sortable-chosen{background:var(--accent);}
+.ordered-tag.sortable-ghost{opacity:.4;}
+
+/* Lightbox (admin doesn't need but keep for consistency if we ever add) */
+.tabpanel{display:none;}
+.tabpanel.active{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ============= LOGIN ============= -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-eyebrow">Trip Planner Admin</div>
+    <div class="login-title">行程規劃後臺</div>
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
+    <input id="loginPwd" type="password" placeholder="密碼" autocomplete="current-password">
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">登入</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ============= SHELL ============= -->
+<div id="shell">
+  <div class="top-bar">
+    <div class="brand">
+      <small>Trip Planner</small>
+      行程規劃後臺
+    </div>
+    <div class="user-info">
+      <span id="userName"></span>
+      <button class="btn ghost small" onclick="doLogout()">登出</button>
+      <a class="btn ghost small" href="index.html" target="_blank">開啟前臺 ↗</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('places',this)">景點資料庫</button>
+      <button class="tab" onclick="switchTab('tags',this)">標籤管理</button>
+      <button class="tab" onclick="switchTab('itinerary',this)">行程排列</button>
+      <button class="tab" onclick="switchTab('trip',this)">基本資訊</button>
+    </div>
+
+    <!-- ============= PLACES ============= -->
+    <div class="tabpanel active" id="tab-places">
+      <div class="section">
+        <h3><span id="pl-form-title">新增景點</span></h3>
+        <div class="form-row two">
+          <div>
+            <label>名稱 *</label>
+            <input type="text" id="pl-name" placeholder="例：Hightide Store Fukuoka">
+          </div>
+          <div>
+            <label>地址</label>
+            <input type="text" id="pl-address" placeholder="例：福岡市中央區白金1-6-20">
+          </div>
+        </div>
+        <div class="form-row two">
+          <div>
+            <label>Google Maps 連結</label>
+            <input type="url" id="pl-gmap" placeholder="https://maps.app.goo.gl/...">
+            <div class="hint">留空但填地址時，前臺會用地址自動生成 GMap 連結。</div>
+          </div>
+          <div>
+            <label>預估交通時間</label>
+            <input type="text" id="pl-transit" placeholder="例：博多站步行 15 分">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>其他參考連結（選填，一行一個 URL）</label>
+            <textarea id="pl-links" placeholder="https://www.kkday.com/...&#10;https://www.klook.com/..." rows="3"></textarea>
+            <div class="hint">前臺會依網域自動判斷顯示名稱（KKday／Klook／TripAdvisor 等）。</div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>類型標籤（複選）</label>
+            <div class="taglist" id="pl-typetags"></div>
+            <div class="ordered-selection" id="pl-typetags-order-wrap" style="display:none;">
+              <div class="ord-label">已選類型順序（拖拉調整，最前面 = 主要類型）</div>
+              <div class="ordered-tags" id="pl-typetags-ordered"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>區域標籤（複選）</label>
+            <div class="taglist" id="pl-regiontags"></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>備註</label>
+            <textarea id="pl-notes" placeholder="營業時間、必點、注意事項…"></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>縮圖（選填，自動壓縮為 500×500 JPEG）</label>
+            <div class="image-upload">
+              <div class="image-preview" id="pl-image-preview"><span class="no-image">尚無圖片</span></div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn small ghost" type="button" onclick="document.getElementById('pl-image').click()">選擇圖片</button>
+                <button class="btn small danger" type="button" onclick="removeImage()" id="pl-image-remove" style="display:none">移除</button>
+                <input type="file" id="pl-image" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="savePlace()">儲存</button>
+          <button class="btn ghost" onclick="clearPlaceForm()">清空</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input type="text" id="pl-search" placeholder="搜尋景點…" oninput="renderPlaceList()">
+        </div>
+        <div id="pl-list"></div>
+      </div>
+    </div>
+
+    <!-- ============= TAGS ============= -->
+    <div class="tabpanel" id="tab-tags">
+      <div class="section">
+        <h3>類型標籤</h3>
+        <div class="taglist" id="tg-typelist"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <input type="text" id="tg-newtype" placeholder="新增類型標籤" style="max-width:220px;" onkeydown="if(event.key==='Enter')addTag('type')">
+          <button class="btn small" onclick="addTag('type')">＋ 新增</button>
+        </div>
+      </div>
+      <div class="section">
+        <h3>區域標籤</h3>
+        <div class="taglist" id="tg-regionlist"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <input type="text" id="tg-newregion" placeholder="新增區域標籤" style="max-width:220px;" onkeydown="if(event.key==='Enter')addTag('region')">
+          <button class="btn small" onclick="addTag('region')">＋ 新增</button>
+        </div>
+      </div>
+      <div class="hint" style="padding:0 4px;">刪除已被景點使用的標籤時，會一併從所有景點中移除。</div>
+    </div>
+
+    <!-- ============= ITINERARY ============= -->
+    <div class="tabpanel" id="tab-itinerary">
+      <div class="section">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="addDay(true)">＋ 新增一天（含 4 個預設時段）</button>
+          <button class="btn ghost small" onclick="addDay(false)">新增空白日</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">拖拉左側 ⋮⋮ 手把可調整順序。時段的日期為選填。</div>
+      </div>
+      <div id="it-days"></div>
+    </div>
+
+    <!-- ============= TRIP META ============= -->
+    <div class="tabpanel" id="tab-trip">
+      <div class="section">
+        <h3>行程基本資訊（前臺頁首顯示）</h3>
+        <div class="form-row two">
+          <div>
+            <label>小標（Eyebrow）</label>
+            <input type="text" id="tr-eyebrow" placeholder="Fukuoka Family Trip">
+          </div>
+          <div>
+            <label>主標題</label>
+            <input type="text" id="tr-title" placeholder="福岡行程查找">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>副標</label>
+            <input type="text" id="tr-subtitle" placeholder="2026/8/4（二）— 8/10（一）">
+          </div>
+        </div>
+        <button class="btn" onclick="saveTrip()">儲存</button>
+      </div>
+      <div class="section">
+        <h3>資料備份與還原</h3>
+        <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
+          任何大改動前，先「匯出」目前資料並保存下載的 JSON 檔。<br>
+          「匯入」會<strong style="color:var(--warn);">完全覆蓋</strong>目前資料庫，請務必先備份。
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" onclick="exportData()">📥 匯出目前資料</button>
+          <button class="btn ghost" onclick="triggerImport()">📤 匯入 JSON 備份</button>
+          <input type="file" id="imp-file" accept="application/json,.json" style="display:none" onchange="handleImport(event)">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= PICKER ============= -->
+<div class="picker" id="picker">
+  <div class="picker-inner">
+    <div class="picker-head">
+      <input type="text" id="pk-search" placeholder="搜尋景點名稱／標籤／地址…" oninput="renderPicker()">
+      <div class="chips" id="pk-tagfilter"></div>
+    </div>
+    <div class="picker-body" id="pk-body"></div>
+    <div class="picker-foot">
+      <span class="count" id="pk-count">已選 0</span>
+      <div>
+        <button class="btn ghost small" onclick="closePicker()">取消</button>
+        <button class="btn small" onclick="confirmPicker()">確定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============= COLOR PICKER ============= -->
+<div class="color-picker" id="colorPicker">
+  <div class="cp-inner">
+    <div class="cp-head">
+      為類型標籤 <strong id="cp-tag-name"></strong> 選擇顏色
+    </div>
+    <div class="cp-swatches" id="cp-swatches"></div>
+    <div class="cp-custom">
+      <label>自訂色碼</label>
+      <input type="text" id="cp-hex" placeholder="#RRGGBB" oninput="onHexInput(event)" maxlength="7">
+      <div class="cp-preview" id="cp-preview"></div>
+    </div>
+    <div class="cp-foot">
+      <button class="btn ghost small" onclick="clearTagColor()">移除顏色</button>
+      <div class="cp-actions">
+        <button class="btn ghost small" onclick="closeColorPicker()">取消</button>
+        <button class="btn small" onclick="applyColor()">確定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= MAIN LOGIC ============= -->
+<script>
+/* ═══════════ Constants ═══════════ */
+const COLOR_PALETTE = [
+  '#C1442D', '#E67E22', '#C4A02E', '#6B9B4D', '#2C5F8A',
+  '#7A4B9E', '#A13D5C', '#7D5A3A', '#55524C', '#4A6572'
+];
+
+/* ═══════════ State ═══════════ */
+const state = {
+  user: null,
+  trip: null,
+  places: [],
+  tags: [],
+  days: [],
+  editingPlaceId: null,
+  pendingImage: null,
+  selectedTypeTags: [],
+  selectedRegionTags: [],
+  picker: {
+    open: false,
+    dayId: null, slotId: null,
+    tempSelected: new Set(),
+    tagFilter: new Set(),
+    query: ''
+  },
+  colorPicker: { open: false, tagId: null, selectedColor: null }
+};
+
+/* ═══════════ Firebase startup ═══════════ */
+window.onFirebaseReady = function() {
+  const { auth, onAuthStateChanged } = window._fb;
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      state.user = user;
+      showShell();
+      subscribeAll();
+    } else {
+      state.user = null;
+      showLogin();
+    }
+  });
+};
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pwd   = document.getElementById('loginPwd').value;
+  const err   = document.getElementById('loginErr');
+  const btn   = document.getElementById('loginBtn');
+  err.textContent = '';
+  if (!email || !pwd) { err.textContent = '請輸入帳號與密碼'; return; }
+  btn.disabled = true; btn.textContent = '登入中…';
+  try {
+    const { auth, signInWithEmailAndPassword } = window._fb;
+    await signInWithEmailAndPassword(auth, email, pwd);
+  } catch(e) {
+    err.textContent = '帳號或密碼錯誤';
+    btn.disabled = false; btn.textContent = '登入';
+  }
+}
+async function doLogout() {
+  const { auth, signOut } = window._fb;
+  await signOut(auth);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('loginScreen').classList.contains('hidden')
+      && document.activeElement && ['loginEmail','loginPwd'].includes(document.activeElement.id)) {
+    doLogin();
+  }
+});
+
+function showLogin() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('shell').classList.remove('ready');
+}
+function showShell() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('shell').classList.add('ready');
+  document.getElementById('userName').textContent = state.user.email;
+}
+
+/* ═══════════ Data subscriptions ═══════════ */
+function subscribeAll() {
+  const { db, ref, onValue } = window._fb;
+
+  onValue(ref(db, 'trip'), snap => {
+    state.trip = snap.val() || null;
+    renderTripTab();
+  });
+
+  onValue(ref(db, 'places'), snap => {
+    const data = snap.val() || {};
+    state.places = Object.entries(data).map(([id, v]) => ({ id, ...v }))
+      .sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    renderPlaceForm(); renderPlaceList(); renderItinerary(); renderPicker(); renderTags();
+  });
+
+  onValue(ref(db, 'tags'), snap => {
+    const data = snap.val() || {};
+    state.tags = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+    renderTags(); renderPlaceForm(); renderPicker();
+  });
+
+  onValue(ref(db, 'days'), snap => {
+    const data = snap.val() || {};
+    state.days = Object.entries(data).map(([id, v]) => {
+      const slotsObj = v.slots || {};
+      const slots = Object.entries(slotsObj).map(([sid, sv]) => ({ id: sid, ...sv }))
+        .sort((a,b) => (a.order||0) - (b.order||0));
+      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots };
+    }).sort((a,b) => (a.order||0) - (b.order||0));
+    renderItinerary();
+  });
+
+  seedDefaults();
+}
+
+/* ═══════════ First-run seeding ═══════════ */
+async function seedDefaults() {
+  const { db, ref, get, set, push, serverTimestamp } = window._fb;
+  try {
+    const tagsSnap = await get(ref(db, 'tags'));
+    if (!tagsSnap.exists()) {
+      const defaults = {
+        type: ['文具','選物','玩具','景點','百貨公司','大型商場','美食'],
+        region: ['博多','天神','大名','今泉','中洲','百道','海之中道','太宰府','柳川','熊本']
+      };
+      const updates = {};
+      for (const cat of Object.keys(defaults)) {
+        for (const name of defaults[cat]) {
+          const newRef = push(ref(db, 'tags'));
+          updates[newRef.key] = { name, category: cat, createdAt: Date.now() };
+        }
+      }
+      await set(ref(db, 'tags'), updates);
+    }
+    const tripSnap = await get(ref(db, 'trip'));
+    if (!tripSnap.exists()) {
+      await set(ref(db, 'trip'), {
+        title: '福岡行程查找',
+        eyebrow: 'Fukuoka Family Trip',
+        subtitle: '2026/8/4（二）— 8/10（一）',
+        createdAt: Date.now()
+      });
+    }
+  } catch(e) {
+    console.warn('Seed skipped:', e.message);
+  }
+}
+
+/* ═══════════ Tabs ═══════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+/* ═══════════ Places ═══════════ */
+function renderPlaceForm() {
+  const typeBox = document.getElementById('pl-typetags');
+  const regionBox = document.getElementById('pl-regiontags');
+  typeBox.innerHTML = ''; regionBox.innerHTML = '';
+
+  state.tags.filter(t => t.category === 'type').forEach(t => {
+    typeBox.appendChild(makeSelectableTag(t.name, 'type', state.selectedTypeTags));
+  });
+  state.tags.filter(t => t.category === 'region').forEach(t => {
+    regionBox.appendChild(makeSelectableTag(t.name, 'region', state.selectedRegionTags));
+  });
+  typeBox.appendChild(makeAddTagInput('type'));
+  regionBox.appendChild(makeAddTagInput('region'));
+
+  document.getElementById('pl-form-title').textContent =
+    state.editingPlaceId ? '編輯景點' : '新增景點';
+
+  renderOrderedTypeTags();
+}
+
+function renderOrderedTypeTags() {
+  const wrap = document.getElementById('pl-typetags-order-wrap');
+  const container = document.getElementById('pl-typetags-ordered');
+  const tags = state.selectedTypeTags;
+
+  if (tags.length < 2) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  container.innerHTML = '';
+
+  tags.forEach((name, i) => {
+    const tag = state.tags.find(t => t.category === 'type' && t.name === name);
+    const color = tag?.color;
+    const dot = color ? `<span class="cdot" style="background:${color}"></span>` : '';
+    const badge = i === 0 ? '<span class="first-badge">主</span>' : '';
+    const chip = document.createElement('span');
+    chip.className = 'ordered-tag';
+    chip.dataset.name = name;
+    chip.innerHTML = `<span class="drag-h">⋮⋮</span>${dot}${esc(name)}${badge}`;
+    container.appendChild(chip);
+  });
+
+  Sortable.create(container, {
+    animation: 150,
+    onEnd: () => {
+      const newOrder = [...container.querySelectorAll('.ordered-tag')].map(el => el.dataset.name);
+      state.selectedTypeTags = newOrder;
+      renderPlaceForm();
+    }
+  });
+}
+
+function makeSelectableTag(name, kind, activeArr) {
+  const chip = document.createElement('span');
+  chip.className = `tagchip ${kind}` + (activeArr.includes(name) ? ' selected' : '');
+  if (kind === 'type') {
+    const tag = state.tags.find(t => t.category === 'type' && t.name === name);
+    const color = tag?.color;
+    const dot = color ? `<span class="cdot" style="background:${color}"></span>` : '';
+    chip.innerHTML = dot + esc(name);
+  } else {
+    chip.textContent = name;
+  }
+  chip.onclick = () => {
+    const idx = activeArr.indexOf(name);
+    if (idx >= 0) activeArr.splice(idx, 1);
+    else activeArr.push(name);
+    renderPlaceForm();
+  };
+  return chip;
+}
+function makeAddTagInput(kind) {
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'newtag-input';
+  input.placeholder = kind === 'type' ? '+ 新增類型' : '+ 新增區域';
+  input.onkeydown = async (e) => {
+    if (e.key !== 'Enter' || !input.value.trim()) return;
+    const name = input.value.trim();
+    if (state.tags.some(t => t.category === kind && t.name === name)) { toast('已有同名標籤'); return; }
+    try {
+      const { db, ref, push, set } = window._fb;
+      const newRef = push(ref(db, 'tags'));
+      await set(newRef, { name, category: kind, createdAt: Date.now() });
+      const targetArr = (kind === 'type') ? state.selectedTypeTags : state.selectedRegionTags;
+      if (!targetArr.includes(name)) targetArr.push(name);
+      input.value = '';
+      toast('已新增標籤');
+    } catch(err) { toast('失敗：' + err.message); }
+  };
+  return input;
+}
+
+async function savePlace() {
+  const name = document.getElementById('pl-name').value.trim();
+  if (!name) { toast('請填名稱'); return; }
+  const data = {
+    name,
+    address: document.getElementById('pl-address').value.trim(),
+    gmapUrl: document.getElementById('pl-gmap').value.trim(),
+    transitTime: document.getElementById('pl-transit').value.trim(),
+    notes: document.getElementById('pl-notes').value.trim(),
+    otherLinks: document.getElementById('pl-links').value
+      .split('\n').map(s => s.trim()).filter(s => /^https?:\/\//i.test(s)),
+    typeTags: [...state.selectedTypeTags],
+    regionTags: [...state.selectedRegionTags],
+    imageBase64: state.pendingImage || null,
+    updatedAt: Date.now()
+  };
+  try {
+    const { db, ref, push, set, update } = window._fb;
+    if (state.editingPlaceId) {
+      await update(ref(db, 'places/' + state.editingPlaceId), data);
+      toast('已更新');
+    } else {
+      data.createdAt = Date.now();
+      const newRef = push(ref(db, 'places'));
+      await set(newRef, data);
+      toast('已新增');
+    }
+    clearPlaceForm();
+  } catch(e) { toast('儲存失敗：' + e.message); }
+}
+
+function clearPlaceForm() {
+  state.editingPlaceId = null;
+  ['pl-name','pl-address','pl-gmap','pl-transit','pl-notes','pl-links'].forEach(id => document.getElementById(id).value = '');
+  state.selectedTypeTags = [];
+  state.selectedRegionTags = [];
+  state.pendingImage = null;
+  renderImagePreview();
+  renderPlaceForm();
+}
+
+function renderPlaceList() {
+  const q = document.getElementById('pl-search').value.trim().toLowerCase();
+  const list = document.getElementById('pl-list');
+  list.innerHTML = '';
+  const filtered = state.places.filter(p => {
+    if (!q) return true;
+    const hay = [p.name, p.address, p.notes, ...(p.typeTags||[]), ...(p.regionTags||[])].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  if (filtered.length === 0) { list.innerHTML = '<div class="empty">尚無景點</div>'; return; }
+  filtered.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'place-item';
+    const regionTags = (p.regionTags||[]).map(t => `<span class="tagpill region">${esc(t)}</span>`).join('');
+    const typeTags = (p.typeTags||[]).map(t => {
+      const tag = state.tags.find(x => x.category === 'type' && x.name === t);
+      const color = tag?.color;
+      return color
+        ? `<span class="tagpill" style="background:${color};color:#fff;">${esc(t)}</span>`
+        : `<span class="tagpill">${esc(t)}</span>`;
+    }).join('');
+    const notesShort = p.notes
+      ? (p.notes.length > 80 ? esc(p.notes.substring(0,80)) + '…' : esc(p.notes))
+      : '';
+    item.innerHTML = `
+      <div class="thumb">${p.imageBase64 ? `<img src="${escAttr(p.imageBase64)}" alt="">` : ''}</div>
+      <div class="info">
+        <div class="name">${esc(p.name)}</div>
+        <div class="meta">${regionTags}${typeTags}</div>
+        ${notesShort ? `<div class="meta">📝 ${notesShort}</div>` : ''}
+        ${p.transitTime ? `<div class="meta">🚉 ${esc(p.transitTime)}</div>` : ''}
+      </div>
+      <div class="actions">
+        <button class="btn small ghost" onclick="editPlace('${p.id}')">編輯</button>
+        <button class="btn small danger" onclick="deletePlace('${p.id}')">刪除</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function editPlace(id) {
+  const p = state.places.find(x => x.id === id);
+  if (!p) return;
+  state.editingPlaceId = id;
+  document.getElementById('pl-name').value = p.name || '';
+  document.getElementById('pl-address').value = p.address || '';
+  document.getElementById('pl-gmap').value = p.gmapUrl || '';
+  document.getElementById('pl-transit').value = p.transitTime || '';
+  document.getElementById('pl-notes').value = p.notes || '';
+  document.getElementById('pl-links').value = (p.otherLinks || []).join('\n');
+  state.selectedTypeTags = [...(p.typeTags || [])];
+  state.selectedRegionTags = [...(p.regionTags || [])];
+  state.pendingImage = p.imageBase64 || null;
+  renderImagePreview();
+  renderPlaceForm();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deletePlace(id) {
+  const p = state.places.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`確定刪除「${p.name}」？`)) return;
+  try {
+    const { db, ref, remove, update } = window._fb;
+    await remove(ref(db, 'places/' + id));
+    // Cascade: remove references from all slots
+    for (const day of state.days) {
+      for (const s of day.slots) {
+        if ((s.placeIds || []).includes(id)) {
+          await update(ref(db, `days/${day.id}/slots/${s.id}`),
+            { placeIds: (s.placeIds || []).filter(x => x !== id) });
+        }
+      }
+    }
+    toast('已刪除');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+/* ═══════════ Tags ═══════════ */
+function renderTags() {
+  const typeBox = document.getElementById('tg-typelist');
+  const regionBox = document.getElementById('tg-regionlist');
+  typeBox.innerHTML = ''; regionBox.innerHTML = '';
+
+  const usage = (name, cat) => state.places.filter(p =>
+    ((cat === 'type' ? p.typeTags : p.regionTags) || []).includes(name)
+  ).length;
+
+  const build = (tag, box) => {
+    const used = usage(tag.name, tag.category);
+    const chip = document.createElement('span');
+    chip.className = `tagchip ${tag.category}`;
+    if (tag.category === 'type') {
+      chip.style.cursor = 'pointer';
+      chip.title = '點擊選擇顏色';
+      const dot = tag.color
+        ? `<span class="cdot" style="background:${tag.color}"></span>`
+        : `<span class="cdot empty"></span>`;
+      chip.innerHTML = dot + `${esc(tag.name)}<span class="badge">${used}</span><span class="x">✕</span>`;
+      chip.onclick = (e) => {
+        if (e.target.closest('.x')) return;
+        openColorPicker(tag.id);
+      };
+    } else {
+      chip.innerHTML = `${esc(tag.name)}<span class="badge">${used}</span><span class="x">✕</span>`;
+    }
+    chip.querySelector('.x').onclick = async (e) => {
+      e.stopPropagation();
+      if (used > 0 && !confirm(`此標籤已被 ${used} 個景點使用，刪除會一併從那些景點移除。確定？`)) return;
+      if (used === 0 && !confirm(`確定刪除標籤「${tag.name}」？`)) return;
+      try {
+        const { db, ref, remove, update } = window._fb;
+        await remove(ref(db, 'tags/' + tag.id));
+        const field = tag.category === 'type' ? 'typeTags' : 'regionTags';
+        for (const p of state.places) {
+          const arr = p[field] || [];
+          if (arr.includes(tag.name)) {
+            await update(ref(db, 'places/' + p.id), { [field]: arr.filter(x => x !== tag.name) });
+          }
+        }
+        toast('已刪除');
+      } catch(err) { toast('失敗：' + err.message); }
+    };
+    box.appendChild(chip);
+  };
+  state.tags.filter(t => t.category === 'type').forEach(t => build(t, typeBox));
+  state.tags.filter(t => t.category === 'region').forEach(t => build(t, regionBox));
+}
+
+async function addTag(cat) {
+  const input = document.getElementById(cat === 'type' ? 'tg-newtype' : 'tg-newregion');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.tags.some(t => t.category === cat && t.name === name)) { toast('已有同名標籤'); return; }
+  try {
+    const { db, ref, push, set } = window._fb;
+    const newRef = push(ref(db, 'tags'));
+    await set(newRef, { name, category: cat, createdAt: Date.now() });
+    input.value = '';
+    toast('已新增');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+/* ═══════════ Itinerary ═══════════ */
+async function addDay(withDefaultSlots) {
+  const dayNumber = state.days.length + 1;
+  const order = dayNumber * 1000;
+  try {
+    const { db, ref, push, set } = window._fb;
+    const newRef = push(ref(db, 'days'));
+    const data = { dayNumber, order, date: '', createdAt: Date.now() };
+    if (withDefaultSlots) {
+      data.slots = {};
+      ['上午','中午','下午','晚上'].forEach((label, i) => {
+        const slotRef = push(ref(db, 'days/' + newRef.key + '/slots'));
+        data.slots[slotRef.key] = { label, order: (i+1)*1000, placeIds: [], transitFromPrevious: '' };
+      });
+    }
+    await set(newRef, data);
+    toast('已新增一天');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+function renderItinerary() {
+  const container = document.getElementById('it-days');
+  container.innerHTML = '';
+
+  state.days.forEach(day => {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day-editor';
+    dayEl.dataset.dayId = day.id;
+    const dateStr = day.date || '';
+    dayEl.innerHTML = `
+      <div class="day-editor-header">
+        <span class="drag" title="拖拉排序">⋮⋮</span>
+        <span class="day-lbl">Day</span>
+        <input type="text" class="day-number" value="${day.dayNumber ?? ''}" placeholder="1">
+        <label style="margin:0;">日期</label>
+        <input type="date" class="day-date" value="${dateStr}">
+        <button class="btn small ghost" onclick="addSlot('${day.id}')">＋ 新時段</button>
+        <button class="btn mini danger" style="margin-left:auto;" onclick="deleteDay('${day.id}')">刪除此日</button>
+      </div>
+      <div class="slots-container"></div>
+    `;
+    const slotsContainer = dayEl.querySelector('.slots-container');
+    day.slots.forEach(s => slotsContainer.appendChild(renderSlotEditor(day.id, s)));
+
+    dayEl.querySelector('.day-number').onchange = async (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (isNaN(val)) return;
+      const { db, ref, update } = window._fb;
+      await update(ref(db, 'days/' + day.id), { dayNumber: val });
+    };
+    dayEl.querySelector('.day-date').onchange = async (e) => {
+      const { db, ref, update } = window._fb;
+      await update(ref(db, 'days/' + day.id), { date: e.target.value });
+    };
+
+    Sortable.create(slotsContainer, {
+      handle: '.drag', animation: 150,
+      onEnd: async () => {
+        const ids = [...slotsContainer.querySelectorAll('.slot-editor')].map(el => el.dataset.slotId);
+        const { db, ref, update } = window._fb;
+        const updates = {};
+        ids.forEach((sid, i) => { updates[`days/${day.id}/slots/${sid}/order`] = (i+1)*1000; });
+        await update(ref(db), updates);
+      }
+    });
+
+    container.appendChild(dayEl);
+  });
+
+  Sortable.create(container, {
+    handle: '.day-editor-header .drag', animation: 150,
+    onEnd: async () => {
+      const ids = [...container.querySelectorAll('.day-editor')].map(el => el.dataset.dayId);
+      const { db, ref, update } = window._fb;
+      const updates = {};
+      ids.forEach((did, i) => { updates[`days/${did}/order`] = (i+1)*1000; });
+      await update(ref(db), updates);
+    }
+  });
+}
+
+function renderSlotEditor(dayId, slot) {
+  const el = document.createElement('div');
+  el.className = 'slot-editor';
+  el.dataset.slotId = slot.id;
+
+  const places = (slot.placeIds || []).map(pid => state.places.find(p => p.id === pid)).filter(Boolean);
+  const pills = places.map(p =>
+    `<span class="slot-place-pill" data-pid="${p.id}">${esc(p.name)}<span class="x" onclick="removePlaceFromSlot('${dayId}','${slot.id}','${p.id}')">✕</span></span>`
+  ).join('');
+
+  el.innerHTML = `
+    <div class="slot-head">
+      <span class="drag">⋮⋮</span>
+      <input type="text" class="slot-label" value="${escAttr(slot.label || '')}">
+      <button class="btn small ghost" onclick="openPicker('${dayId}','${slot.id}')">選擇景點</button>
+      <button class="btn mini danger" style="margin-left:auto;" onclick="deleteSlot('${dayId}','${slot.id}')">✕</button>
+    </div>
+    <input type="text" class="slot-transit" placeholder="與前一站的交通時間（選填）" value="${escAttr(slot.transitFromPrevious || '')}">
+    <div class="slot-places">${pills}</div>
+  `;
+  el.querySelector('.slot-label').onchange = async (e) => {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, `days/${dayId}/slots/${slot.id}`), { label: e.target.value });
+  };
+  el.querySelector('.slot-transit').onchange = async (e) => {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, `days/${dayId}/slots/${slot.id}`), { transitFromPrevious: e.target.value });
+  };
+  // Drag-reorder places within this slot
+  Sortable.create(el.querySelector('.slot-places'), {
+    animation: 150,
+    onEnd: async () => {
+      const newOrder = [...el.querySelectorAll('.slot-place-pill')].map(pill => pill.dataset.pid);
+      const { db, ref, update } = window._fb;
+      await update(ref(db, `days/${dayId}/slots/${slot.id}`), { placeIds: newOrder });
+    }
+  });
+  return el;
+}
+
+async function removePlaceFromSlot(dayId, slotId, placeId) {
+  const day = state.days.find(d => d.id === dayId);
+  const slot = day?.slots.find(s => s.id === slotId);
+  if (!slot) return;
+  const { db, ref, update } = window._fb;
+  await update(ref(db, `days/${dayId}/slots/${slotId}`),
+    { placeIds: (slot.placeIds || []).filter(x => x !== placeId) });
+}
+
+async function addSlot(dayId) {
+  const day = state.days.find(d => d.id === dayId);
+  const nextOrder = ((day?.slots.slice(-1)[0]?.order) || 0) + 1000;
+  const { db, ref, push, set } = window._fb;
+  const slotRef = push(ref(db, 'days/' + dayId + '/slots'));
+  await set(slotRef, { label: '新時段', order: nextOrder, placeIds: [], transitFromPrevious: '' });
+}
+
+async function deleteSlot(dayId, slotId) {
+  if (!confirm('刪除此時段？')) return;
+  const { db, ref, remove } = window._fb;
+  await remove(ref(db, `days/${dayId}/slots/${slotId}`));
+}
+
+async function deleteDay(dayId) {
+  const day = state.days.find(d => d.id === dayId);
+  if (!day) return;
+  if (!confirm(`刪除 Day ${day.dayNumber}？此日的所有時段也會一併刪除。`)) return;
+  const { db, ref, remove } = window._fb;
+  await remove(ref(db, 'days/' + dayId));
+  toast('已刪除');
+}
+
+/* ═══════════ Picker ═══════════ */
+function openPicker(dayId, slotId) {
+  const day = state.days.find(d => d.id === dayId);
+  const slot = day?.slots.find(s => s.id === slotId);
+  if (!slot) return;
+  state.picker.open = true;
+  state.picker.dayId = dayId;
+  state.picker.slotId = slotId;
+  state.picker.tempSelected = new Set(slot.placeIds || []);
+  state.picker.tagFilter = new Set();
+  state.picker.query = '';
+  document.getElementById('pk-search').value = '';
+  document.getElementById('picker').classList.add('open');
+  renderPicker();
+}
+function closePicker() {
+  state.picker.open = false;
+  document.getElementById('picker').classList.remove('open');
+}
+async function confirmPicker() {
+  const { dayId, slotId, tempSelected } = state.picker;
+  try {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, `days/${dayId}/slots/${slotId}`), { placeIds: [...tempSelected] });
+    closePicker();
+    toast('已更新時段');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+function renderPicker() {
+  if (!state.picker.open) return;
+  state.picker.query = document.getElementById('pk-search').value.trim().toLowerCase();
+  const tagBox = document.getElementById('pk-tagfilter');
+  const body = document.getElementById('pk-body');
+  tagBox.innerHTML = ''; body.innerHTML = '';
+
+  [...state.tags.filter(t => t.category === 'region'),
+   ...state.tags.filter(t => t.category === 'type')].forEach(t => {
+    const c = document.createElement('span');
+    c.className = `tagchip ${t.category}` + (state.picker.tagFilter.has(t.name) ? ' selected' : '');
+    if (t.category === 'type' && t.color) {
+      c.innerHTML = `<span class="cdot" style="background:${t.color}"></span>${esc(t.name)}`;
+    } else {
+      c.textContent = t.name;
+    }
+    c.onclick = () => {
+      state.picker.tagFilter.has(t.name) ? state.picker.tagFilter.delete(t.name) : state.picker.tagFilter.add(t.name);
+      renderPicker();
+    };
+    tagBox.appendChild(c);
+  });
+
+  const filtered = state.places.filter(p => {
+    if (state.picker.query) {
+      const hay = [p.name, p.address, p.notes, ...(p.typeTags||[]), ...(p.regionTags||[])].join(' ').toLowerCase();
+      if (!hay.includes(state.picker.query)) return false;
+    }
+    if (state.picker.tagFilter.size > 0) {
+      const allTags = new Set([...(p.typeTags||[]), ...(p.regionTags||[])]);
+      if (![...state.picker.tagFilter].some(t => allTags.has(t))) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) { body.innerHTML = '<div class="empty">沒有符合的景點</div>'; }
+  else filtered.forEach(p => {
+    const item = document.createElement('label');
+    item.className = 'picker-item';
+    const checked = state.picker.tempSelected.has(p.id);
+    const regionTags = (p.regionTags||[]).map(t => `<span class="tagpill region">${esc(t)}</span>`).join('');
+    const typeTags = (p.typeTags||[]).map(t => {
+      const tag = state.tags.find(x => x.category === 'type' && x.name === t);
+      const color = tag?.color;
+      return color
+        ? `<span class="tagpill" style="background:${color};color:#fff;">${esc(t)}</span>`
+        : `<span class="tagpill">${esc(t)}</span>`;
+    }).join('');
+    item.innerHTML = `
+      <input type="checkbox" ${checked ? 'checked':''}>
+      <div class="info">
+        <div class="name">${esc(p.name)}</div>
+        <div class="meta">${regionTags}${typeTags}</div>
+        ${p.address ? `<div class="meta">📍 ${esc(p.address)}</div>` : ''}
+      </div>`;
+    item.querySelector('input').onchange = (e) => {
+      e.target.checked ? state.picker.tempSelected.add(p.id) : state.picker.tempSelected.delete(p.id);
+      document.getElementById('pk-count').textContent = `已選 ${state.picker.tempSelected.size}`;
+    };
+    body.appendChild(item);
+  });
+  document.getElementById('pk-count').textContent = `已選 ${state.picker.tempSelected.size}`;
+}
+
+/* ═══════════ Trip metadata ═══════════ */
+function renderTripTab() {
+  const t = state.trip || {};
+  document.getElementById('tr-eyebrow').value = t.eyebrow || '';
+  document.getElementById('tr-title').value = t.title || '';
+  document.getElementById('tr-subtitle').value = t.subtitle || '';
+}
+async function saveTrip() {
+  try {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, 'trip'), {
+      eyebrow: document.getElementById('tr-eyebrow').value.trim(),
+      title: document.getElementById('tr-title').value.trim(),
+      subtitle: document.getElementById('tr-subtitle').value.trim(),
+      updatedAt: Date.now()
+    });
+    toast('已儲存');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+/* ═══════════ Image upload ═══════════ */
+async function compressImage(file, targetSize = 500) {
+  // createImageBitmap handles EXIF orientation correctly on modern browsers
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch(e) {
+    // Fallback: some Safari versions don't accept the options arg
+    bitmap = await createImageBitmap(file);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = targetSize;
+  canvas.height = targetSize;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, targetSize, targetSize);
+  const size = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - size) / 2;
+  const sy = (bitmap.height - size) / 2;
+  ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, targetSize, targetSize);
+  if (bitmap.close) bitmap.close();
+  return canvas.toDataURL('image/jpeg', 0.72);
+}
+
+async function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('請選擇圖片檔案'); return; }
+  toast('壓縮中…');
+  try {
+    const dataUrl = await compressImage(file, 500);
+    state.pendingImage = dataUrl;
+    renderImagePreview();
+    toast('圖片已就緒，記得按儲存');
+  } catch(e) { toast('圖片處理失敗：' + e.message); }
+  event.target.value = '';
+}
+
+function renderImagePreview() {
+  const preview = document.getElementById('pl-image-preview');
+  const removeBtn = document.getElementById('pl-image-remove');
+  if (!preview) return;
+  if (state.pendingImage) {
+    preview.innerHTML = `<img src="${state.pendingImage}" alt="preview">`;
+    if (removeBtn) removeBtn.style.display = 'inline-flex';
+  } else {
+    preview.innerHTML = '<span class="no-image">尚無圖片</span>';
+    if (removeBtn) removeBtn.style.display = 'none';
+  }
+}
+
+function removeImage() {
+  if (!confirm('確定移除縮圖？儲存後才會生效。')) return;
+  state.pendingImage = null;
+  renderImagePreview();
+}
+
+/* ═══════════ Export / Import ═══════════ */
+async function exportData() {
+  try {
+    const { db, ref, get } = window._fb;
+    const snap = await get(ref(db, '/'));
+    const data = snap.val() || {};
+    const payload = {
+      _meta: { exportedAt: new Date().toISOString(), version: 1 },
+      ...data
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ts = new Date().toISOString().slice(0,10);
+    a.download = `travel-backup-${ts}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('已下載備份檔');
+  } catch(e) { toast('匯出失敗：' + e.message); }
+}
+
+function triggerImport() {
+  document.getElementById('imp-file').click();
+}
+
+async function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!confirm('⚠️ 匯入會完全覆蓋目前所有資料（景點、標籤、行程都會被替換）。\n建議先匯出目前資料作為備份。\n\n確定要繼續嗎？')) return;
+    const { _meta, ...body } = data;
+    const { db, ref, set } = window._fb;
+    await set(ref(db, '/'), body);
+    toast('已匯入資料');
+  } catch(e) { toast('匯入失敗：' + e.message); }
+}
+
+/* ═══════════ Color picker ═══════════ */
+function openColorPicker(tagId) {
+  const tag = state.tags.find(t => t.id === tagId);
+  if (!tag) return;
+  state.colorPicker.open = true;
+  state.colorPicker.tagId = tagId;
+  state.colorPicker.selectedColor = tag.color || null;
+  document.getElementById('cp-tag-name').textContent = tag.name;
+  document.getElementById('cp-hex').value = tag.color || '';
+  updatePreview();
+  renderColorSwatches();
+  document.getElementById('colorPicker').classList.add('open');
+}
+
+function closeColorPicker() {
+  state.colorPicker.open = false;
+  document.getElementById('colorPicker').classList.remove('open');
+}
+
+function renderColorSwatches() {
+  const container = document.getElementById('cp-swatches');
+  container.innerHTML = '';
+  const currentTagId = state.colorPicker.tagId;
+  const selected = state.colorPicker.selectedColor;
+
+  COLOR_PALETTE.forEach(color => {
+    const btn = document.createElement('button');
+    const isSelected = selected && selected.toLowerCase() === color.toLowerCase();
+    btn.className = 'cp-swatch' + (isSelected ? ' active' : '');
+    btn.style.background = color;
+    btn.innerHTML = '<span class="check">✓</span>';
+    const usedBy = state.tags.find(t =>
+      t.category === 'type' && t.id !== currentTagId &&
+      t.color && t.color.toLowerCase() === color.toLowerCase()
+    );
+    if (usedBy) {
+      btn.title = `${color}（已用於：${usedBy.name}）`;
+      btn.classList.add('used');
+    } else {
+      btn.title = color;
+    }
+    btn.onclick = () => {
+      state.colorPicker.selectedColor = color;
+      document.getElementById('cp-hex').value = color;
+      updatePreview();
+      renderColorSwatches();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function onHexInput(e) {
+  const val = e.target.value.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    state.colorPicker.selectedColor = val;
+    renderColorSwatches();
+  }
+  updatePreview();
+}
+
+function updatePreview() {
+  const val = document.getElementById('cp-hex').value.trim();
+  const preview = document.getElementById('cp-preview');
+  if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+    preview.style.background = val;
+  } else {
+    preview.style.background = 'var(--line-soft)';
+  }
+}
+
+async function applyColor() {
+  const { tagId } = state.colorPicker;
+  const customHex = document.getElementById('cp-hex').value.trim();
+  let color = state.colorPicker.selectedColor;
+  if (customHex) {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(customHex)) {
+      toast('色碼格式錯誤（應為 #RRGGBB）');
+      return;
+    }
+    color = customHex;
+  }
+  if (!color) { toast('請選擇顏色'); return; }
+  try {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, 'tags/' + tagId), { color });
+    closeColorPicker();
+    toast('已套用顏色');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+async function clearTagColor() {
+  const { tagId } = state.colorPicker;
+  if (!tagId) return;
+  try {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, 'tags/' + tagId), { color: null });
+    closeColorPicker();
+    toast('已移除顏色');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+/* ═══════════ Utils ═══════════ */
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escAttr(s) { return esc(s); }
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// Expose functions used by inline onclick handlers (needed because they're inside a <script> block after DOM)
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.switchTab = switchTab;
+window.savePlace = savePlace;
+window.clearPlaceForm = clearPlaceForm;
+window.editPlace = editPlace;
+window.deletePlace = deletePlace;
+window.renderPlaceList = renderPlaceList;
+window.addTag = addTag;
+window.addDay = addDay;
+window.deleteDay = deleteDay;
+window.addSlot = addSlot;
+window.deleteSlot = deleteSlot;
+window.removePlaceFromSlot = removePlaceFromSlot;
+window.openPicker = openPicker;
+window.closePicker = closePicker;
+window.confirmPicker = confirmPicker;
+window.saveTrip = saveTrip;
+window.handleImageUpload = handleImageUpload;
+window.removeImage = removeImage;
+window.exportData = exportData;
+window.triggerImport = triggerImport;
+window.handleImport = handleImport;
+window.openColorPicker = openColorPicker;
+window.closeColorPicker = closeColorPicker;
+window.applyColor = applyColor;
+window.clearTagColor = clearTagColor;
+window.onHexInput = onHexInput;
+</script>
+
+</body>
+</html>
