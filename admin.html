@@ -105,6 +105,36 @@ a{color:var(--ok);text-decoration:none;}
 .btn-login:disabled{opacity:.5;cursor:wait;}
 .login-err{color:var(--warn);font-size:12px;margin-top:12px;min-height:16px;}
 
+/* ─── Trip switcher & management ─── */
+.trip-switch{
+  padding:6px 10px;font-size:12.5px;font-weight:600;
+  border:1.5px solid var(--line);border-radius:4px;
+  background:var(--paper-raised);color:var(--ink);max-width:180px;
+}
+.no-trip-banner{
+  background:var(--warn-soft);color:var(--warn);
+  border:1.5px solid var(--warn);border-radius:5px;
+  padding:12px 16px;font-size:13px;font-weight:600;margin-bottom:14px;
+}
+.trip-card{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  padding:14px 0;border-bottom:1px solid var(--line-soft);flex-wrap:wrap;
+}
+.trip-card:last-child{border-bottom:none;}
+.trip-card .info{flex:1;min-width:200px;}
+.trip-card .title{font-weight:700;font-size:15px;margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.trip-card .sub{font-size:12px;color:var(--ink-soft);}
+.trip-card .sub.trip-link{font-family:ui-monospace,'DM Mono',monospace;word-break:break-all;}
+.trip-card .badge-default{
+  font-size:10px;font-weight:700;color:#fff;background:var(--ok);
+  padding:2px 8px;border-radius:10px;
+}
+.trip-card .badge-current{
+  font-size:10px;font-weight:700;color:var(--ink);border:1.5px solid var(--ink);
+  padding:1px 7px;border-radius:10px;
+}
+.trip-card .actions{display:flex;gap:6px;flex-wrap:wrap;}
+
 /* ─── Shell ─── */
 #shell{display:none;}
 #shell.ready{display:block;}
@@ -209,6 +239,80 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
   background:var(--tag-bg);border-radius:20px;
 }
 .slot-place-pill .x{color:var(--warn);cursor:pointer;font-weight:700;padding:0 2px;line-height:1;}
+
+/* Smart paste modal */
+.smart-paste{
+  position:fixed;inset:0;background:rgba(38,34,32,.5);z-index:120;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.smart-paste.open{display:flex;}
+.sp-inner{
+  background:var(--paper-raised);border-radius:6px;
+  max-width:480px;width:100%;padding:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+.sp-head{font-family:'Shippori Mincho',serif;font-size:15px;margin-bottom:12px;}
+.sp-head-hint{font-family:'Noto Sans TC',sans-serif;font-size:11.5px;font-weight:400;color:var(--ink-soft);margin-left:6px;}
+.sp-inner textarea{
+  width:100%;font-family:inherit;font-size:13px;
+  border:1.5px solid var(--line);border-radius:4px;
+  padding:10px 11px;resize:vertical;min-height:100px;
+}
+.sp-preview{
+  margin-top:10px;padding:10px 12px;
+  background:var(--paper);border:1px dashed var(--line);border-radius:4px;
+  font-size:12.5px;line-height:1.8;
+}
+.sp-preview-empty{color:var(--ink-mid);}
+.sp-preview .sp-row{display:flex;gap:6px;}
+.sp-preview .sp-label{color:var(--ink-soft);flex-shrink:0;min-width:80px;font-weight:600;}
+.sp-preview .sp-val{color:var(--ink);word-break:break-all;}
+.sp-preview .sp-val.empty{color:var(--ink-mid);font-style:italic;}
+.sp-hint{font-size:11px;color:var(--ink-soft);margin-top:8px;line-height:1.6;}
+.sp-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+
+/* Journal editor modal */
+.journal-editor{
+  position:fixed;inset:0;background:rgba(38,34,32,.5);z-index:130;
+  display:none;align-items:flex-start;justify-content:center;
+  padding:16px;overflow-y:auto;
+}
+.journal-editor.open{display:flex;}
+.je-inner{
+  background:var(--paper-raised);border-radius:6px;
+  max-width:640px;width:100%;padding:20px;margin:24px 0;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+.je-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line);
+}
+.je-head span{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:700;}
+.je-section{margin-bottom:18px;}
+.je-section label{font-size:11.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;letter-spacing:.02em;}
+.je-section textarea{width:100%;font-family:inherit;font-size:13px;padding:9px 11px;
+  border:1.5px solid var(--line);border-radius:3px;background:var(--paper);resize:vertical;}
+.je-rating-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px dashed var(--line-soft);gap:10px;
+}
+.je-rating-row:last-child{border-bottom:none;}
+.je-rating-name{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.je-stars{flex-shrink:0;letter-spacing:2px;}
+.je-star{font-size:18px;color:var(--line);cursor:pointer;transition:color .1s ease;}
+.je-star.filled{color:var(--accent);}
+.je-star:hover{color:var(--accent);}
+.je-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:10px;}
+.je-photo-thumb{position:relative;aspect-ratio:1;border-radius:4px;overflow:hidden;background:var(--line-soft);border:1px solid var(--line);}
+.je-photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.je-photo-x{
+  position:absolute;top:3px;right:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(38,34,32,.75);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;cursor:pointer;line-height:1;
+}
+.je-photo-x:hover{background:var(--warn);}
 
 /* Picker modal */
 .picker{
@@ -380,24 +484,71 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
       行程規劃後臺
     </div>
     <div class="user-info">
+      <select id="topbar-trip-switch" class="trip-switch" onchange="switchTrip(this.value)"></select>
       <span id="userName"></span>
       <button class="btn ghost small" onclick="doLogout()">登出</button>
-      <a class="btn ghost small" href="index.html" target="_blank">開啟前臺 ↗</a>
+      <a class="btn ghost small" id="frontendLink" href="index.html" target="_blank">開啟前臺 ↗</a>
     </div>
   </div>
 
   <div class="container">
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('places',this)">景點資料庫</button>
+      <button class="tab active" onclick="switchTab('tripmgmt',this)">旅程管理</button>
+      <button class="tab" onclick="switchTab('places',this)">景點資料庫</button>
       <button class="tab" onclick="switchTab('tags',this)">標籤管理</button>
       <button class="tab" onclick="switchTab('itinerary',this)">行程排列</button>
       <button class="tab" onclick="switchTab('trip',this)">基本資訊</button>
     </div>
 
-    <!-- ============= PLACES ============= -->
-    <div class="tabpanel active" id="tab-places">
+    <div class="no-trip-banner" id="noTripBanner" style="display:none;">
+      尚未選擇旅程，請先在下方建立或選擇一個旅程。
+    </div>
+
+    <!-- ============= TRIP MANAGEMENT ============= -->
+    <div class="tabpanel active" id="tab-tripmgmt">
+      <div class="section" id="tm-migrate-section" style="display:none;">
+        <h3>⚠️ 偵測到舊版單一旅程資料</h3>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:12px;">
+          偵測到資料庫根目錄還留有舊版（單一旅程）格式的資料。按下方按鈕可一鍵搬移到新的多旅程結構；
+          搬移完成後，舊版路徑的資料會被清除。<strong style="color:var(--warn);">建議先「匯出目前資料」備份一次再執行。</strong>
+        </p>
+        <button class="btn" onclick="migrateLegacyData()">🚚 一鍵遷移舊資料</button>
+      </div>
+
       <div class="section">
-        <h3><span id="pl-form-title">新增景點</span></h3>
+        <h3>新增旅程</h3>
+        <div class="form-row two">
+          <div>
+            <label>小標（Eyebrow）</label>
+            <input type="text" id="tm-new-eyebrow" placeholder="Fukuoka Family Trip">
+          </div>
+          <div>
+            <label>旅程名稱 *</label>
+            <input type="text" id="tm-new-title" placeholder="福岡行程查找">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>副標</label>
+            <input type="text" id="tm-new-subtitle" placeholder="2026/8/4（二）— 8/10（一）">
+          </div>
+        </div>
+        <button class="btn" onclick="createTrip()">＋ 建立旅程</button>
+      </div>
+
+      <div class="section">
+        <h3>所有旅程</h3>
+        <div id="tm-trip-list"></div>
+      </div>
+    </div>
+
+    <!-- ============= PLACES ============= -->
+    <div class="tabpanel" id="tab-places">
+      <div class="section">
+        <h3>
+          <span id="pl-form-title">新增景點</span>
+          <button class="btn small ghost" style="margin-left:10px;font-family:'Noto Sans TC',sans-serif;" onclick="openSmartPaste()">📋 快速輸入</button>
+        </h3>
         <div class="form-row two">
           <div>
             <label>名稱 *</label>
@@ -478,7 +629,7 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
     <!-- ============= TAGS ============= -->
     <div class="tabpanel" id="tab-tags">
       <div class="section">
-        <h3>類型標籤</h3>
+        <h3>類型標籤 <span style="font-size:11px;font-weight:400;color:var(--ink-soft);">（跨旅程共用）</span></h3>
         <div class="taglist" id="tg-typelist"></div>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <input type="text" id="tg-newtype" placeholder="新增類型標籤" style="max-width:220px;" onkeydown="if(event.key==='Enter')addTag('type')">
@@ -486,7 +637,7 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
         </div>
       </div>
       <div class="section">
-        <h3>區域標籤</h3>
+        <h3>區域標籤 <span style="font-size:11px;font-weight:400;color:var(--ink-soft);">（僅限本旅程）</span></h3>
         <div class="taglist" id="tg-regionlist"></div>
         <div style="display:flex;gap:8px;margin-top:10px;">
           <input type="text" id="tg-newregion" placeholder="新增區域標籤" style="max-width:220px;" onkeydown="if(event.key==='Enter')addTag('region')">
@@ -533,6 +684,7 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
       <div class="section">
         <h3>資料備份與還原</h3>
         <p style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
+          匯出／匯入是整個資料庫的備份（包含<strong>所有旅程</strong>與共用標籤），不是單一旅程。<br>
           任何大改動前，先「匯出」目前資料並保存下載的 JSON 檔。<br>
           「匯入」會<strong style="color:var(--warn);">完全覆蓋</strong>目前資料庫，請務必先備份。
         </p>
@@ -542,6 +694,53 @@ textarea{resize:vertical;min-height:60px;font-family:inherit;}
           <input type="file" id="imp-file" accept="application/json,.json" style="display:none" onchange="handleImport(event)">
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= SMART PASTE ============= -->
+<div class="smart-paste" id="smartPaste">
+  <div class="sp-inner">
+    <div class="sp-head">📋 快速輸入 <span class="sp-head-hint">貼上從 Google Maps App 分享的文字</span></div>
+    <textarea id="sp-textarea" rows="5" placeholder="例如：
+Hightide Store Fukuoka
+https://maps.app.goo.gl/xxxxxxxxxx
+福岡市中央区大名1-XX-XX
+★4.3 (128)" oninput="renderSmartPastePreview()"></textarea>
+    <div class="sp-preview" id="sp-preview">
+      <div class="sp-preview-empty">貼上文字後，這裡會顯示解析結果預覽</div>
+    </div>
+    <div class="sp-hint">只會填入名稱／地址／Google Maps 連結，標籤和備註仍需手動填寫；有值的欄位才會覆蓋，空白解析結果不會清掉原本內容。</div>
+    <div class="sp-foot">
+      <button class="btn ghost small" onclick="closeSmartPaste()">取消</button>
+      <button class="btn small" onclick="applySmartPaste()">解析並填入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============= JOURNAL EDITOR ============= -->
+<div class="journal-editor" id="journalEditor">
+  <div class="je-inner">
+    <div class="je-head">
+      <span id="je-day-label">Day 日記</span>
+      <button class="btn ghost small" onclick="closeJournalEditor()">關閉</button>
+    </div>
+
+    <div class="je-section">
+      <label>景點評分</label>
+      <div id="je-ratings"></div>
+    </div>
+
+    <div class="je-section">
+      <label>文字心得</label>
+      <textarea id="je-text" rows="6" placeholder="這一天的感想、意外、有趣的事…" onchange="saveJournalText()"></textarea>
+    </div>
+
+    <div class="je-section">
+      <label>照片 <span class="hint" style="display:inline;margin:0;">（不限數量，自動壓縮至長邊 1600px）</span></label>
+      <div class="je-photos" id="je-photos"></div>
+      <button class="btn small ghost" onclick="document.getElementById('je-photo-input').click()">＋ 新增照片</button>
+      <input type="file" id="je-photo-input" accept="image/*" multiple style="display:none" onchange="handleJournalPhotoUpload(event)">
     </div>
   </div>
 </div>
@@ -599,9 +798,14 @@ const COLOR_PALETTE = [
 /* ═══════════ State ═══════════ */
 const state = {
   user: null,
+  tripIndex: [],        // lightweight list: [{id, title, order, isDefault, createdAt}]
+  currentTripId: null,
+  legacyDataExists: false,
   trip: null,
   places: [],
-  tags: [],
+  typeTags: [],          // shared across trips, from /tags
+  regionTags: [],        // scoped to current trip, from /trips/{id}/tags
+  tags: [],               // merged typeTags + regionTags, used by existing render code
   days: [],
   editingPlaceId: null,
   pendingImage: null,
@@ -614,8 +818,11 @@ const state = {
     tagFilter: new Set(),
     query: ''
   },
-  colorPicker: { open: false, tagId: null, selectedColor: null }
+  colorPicker: { open: false, tagId: null, selectedColor: null },
+  journalEditor: { open: false, dayId: null, photos: [] }
 };
+let tripUnsubs = [];
+let journalPhotosUnsub = null;
 
 /* ═══════════ Firebase startup ═══════════ */
 window.onFirebaseReady = function() {
@@ -671,68 +878,351 @@ function showShell() {
 
 /* ═══════════ Data subscriptions ═══════════ */
 function subscribeAll() {
-  const { db, ref, onValue } = window._fb;
+  const { db, ref, onValue, get } = window._fb;
 
-  onValue(ref(db, 'trip'), snap => {
-    state.trip = snap.val() || null;
-    renderTripTab();
+  // Shared type tags (root, across all trips)
+  onValue(ref(db, 'tags'), snap => {
+    const data = snap.val() || {};
+    state.typeTags = Object.entries(data).map(([id, v]) => ({ id, ...v, category: 'type' }));
+    rebuildTags();
+    renderTags(); renderPlaceForm(); renderPicker();
   });
 
-  onValue(ref(db, 'places'), snap => {
+  // Lightweight trip index (drives trip switcher + management tab, doesn't pull place/day data)
+  onValue(ref(db, 'tripIndex'), snap => {
+    const data = snap.val() || {};
+    state.tripIndex = Object.entries(data).map(([id, v]) => ({ id, ...v }))
+      .sort((a,b) => (a.order||0) - (b.order||0));
+    renderTripSwitcher();
+    renderTripManagementTab();
+    resolveCurrentTrip();
+  });
+
+  checkLegacyData();
+  maybeSeedFreshDb();
+}
+
+function rebuildTags() {
+  state.tags = [...state.typeTags, ...state.regionTags];
+}
+
+/* ═══════════ Trip resolution & switching ═══════════ */
+function resolveCurrentTrip() {
+  if (state.currentTripId && state.tripIndex.some(t => t.id === state.currentTripId)) {
+    return; // still valid, nothing to do
+  }
+  const saved = sessionStorage.getItem('currentTripId');
+  let target = null;
+  if (saved && state.tripIndex.some(t => t.id === saved)) {
+    target = saved;
+  } else {
+    const def = state.tripIndex.find(t => t.isDefault);
+    target = def ? def.id : (state.tripIndex[0] ? state.tripIndex[0].id : null);
+  }
+  switchTrip(target);
+}
+
+function switchTrip(tripId) {
+  tripId = tripId || null;
+  state.currentTripId = tripId;
+  if (tripId) sessionStorage.setItem('currentTripId', tripId);
+  else sessionStorage.removeItem('currentTripId');
+
+  unsubscribeTripData();
+  clearPlaceForm(); // avoid stale in-progress edits leaking across trips
+  document.getElementById('frontendLink').href = tripId ? `index.html?trip=${encodeURIComponent(tripId)}` : 'index.html';
+
+  if (tripId) {
+    subscribeTripData(tripId);
+  } else {
+    state.trip = null; state.places = []; state.days = []; state.regionTags = [];
+    rebuildTags();
+    renderTripTab(); renderPlaceList(); renderItinerary(); renderTags(); renderPlaceForm(); renderPicker();
+  }
+  renderTripSwitcher();
+  renderTripManagementTab();
+}
+window.switchTrip = switchTrip;
+
+function unsubscribeTripData() {
+  tripUnsubs.forEach(u => { if (u) u(); });
+  tripUnsubs = [];
+}
+
+function subscribeTripData(tripId) {
+  const { db, ref, onValue } = window._fb;
+
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/meta`), snap => {
+    state.trip = snap.val() || null;
+    renderTripTab();
+  }));
+
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/tags`), snap => {
+    const data = snap.val() || {};
+    state.regionTags = Object.entries(data).map(([id, v]) => ({ id, ...v, category: 'region' }));
+    rebuildTags();
+    renderTags(); renderPlaceForm(); renderPicker();
+  }));
+
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/places`), snap => {
     const data = snap.val() || {};
     state.places = Object.entries(data).map(([id, v]) => ({ id, ...v }))
       .sort((a,b) => (a.name||'').localeCompare(b.name||''));
     renderPlaceForm(); renderPlaceList(); renderItinerary(); renderPicker(); renderTags();
-  });
+  }));
 
-  onValue(ref(db, 'tags'), snap => {
-    const data = snap.val() || {};
-    state.tags = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-    renderTags(); renderPlaceForm(); renderPicker();
-  });
-
-  onValue(ref(db, 'days'), snap => {
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/days`), snap => {
     const data = snap.val() || {};
     state.days = Object.entries(data).map(([id, v]) => {
       const slotsObj = v.slots || {};
       const slots = Object.entries(slotsObj).map(([sid, sv]) => ({ id: sid, ...sv }))
         .sort((a,b) => (a.order||0) - (b.order||0));
-      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots };
+      const jRaw = v.journal || {};
+      const journal = { text: jRaw.text || '', ratings: jRaw.ratings || {}, photoCount: jRaw.photoCount || 0 };
+      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots, journal };
     }).sort((a,b) => (a.order||0) - (b.order||0));
     renderItinerary();
-  });
-
-  seedDefaults();
+    if (state.journalEditor.open) renderJournalEditor();
+  }));
 }
 
-/* ═══════════ First-run seeding ═══════════ */
-async function seedDefaults() {
-  const { db, ref, get, set, push, serverTimestamp } = window._fb;
+function requireCurrentTrip() {
+  if (!state.currentTripId) { toast('請先在「旅程管理」建立或選擇一個旅程'); return false; }
+  return true;
+}
+
+function renderTripSwitcher() {
+  const sel = document.getElementById('topbar-trip-switch');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if (state.tripIndex.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = '（尚無旅程）';
+    sel.appendChild(opt);
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  state.tripIndex.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.title + (t.isDefault ? '（預設）' : '');
+    if (t.id === state.currentTripId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('noTripBanner').style.display = state.currentTripId ? 'none' : 'block';
+}
+
+/* ═══════════ Legacy data detection & migration ═══════════ */
+async function checkLegacyData() {
+  const { db, ref, get } = window._fb;
   try {
-    const tagsSnap = await get(ref(db, 'tags'));
-    if (!tagsSnap.exists()) {
-      const defaults = {
-        type: ['文具','選物','玩具','景點','百貨公司','大型商場','美食'],
-        region: ['博多','天神','大名','今泉','中洲','百道','海之中道','太宰府','柳川','熊本']
-      };
-      const updates = {};
-      for (const cat of Object.keys(defaults)) {
-        for (const name of defaults[cat]) {
-          const newRef = push(ref(db, 'tags'));
-          updates[newRef.key] = { name, category: cat, createdAt: Date.now() };
-        }
+    const snap = await get(ref(db, 'places'));
+    state.legacyDataExists = snap.exists();
+  } catch(e) {
+    state.legacyDataExists = false;
+  }
+  renderTripManagementTab();
+}
+
+async function migrateLegacyData() {
+  if (!confirm('即將把舊版單一旅程資料搬移到新的多旅程結構，完成後舊版路徑的資料會被清除。\n建議先按「匯出目前資料」備份一次。\n\n確定要繼續嗎？')) return;
+  try {
+    const { db, ref, get, push, update } = window._fb;
+    const rootSnap = await get(ref(db, '/'));
+    const root = rootSnap.val() || {};
+    const oldTags = root.tags || {};
+    const oldPlaces = root.places || {};
+    const oldDays = root.days || {};
+    const oldTrip = root.trip || {};
+
+    const newTripRef = push(ref(db, 'tripIndex'));
+    const newTripId = newTripRef.key;
+
+    const existingTypeNames = new Map();
+    (state.typeTags || []).forEach(t => existingTypeNames.set(t.name, t.id));
+
+    const updates = {};
+    Object.entries(oldTags).forEach(([tid, t]) => {
+      if (t.category === 'type') {
+        if (existingTypeNames.has(t.name)) return; // already shared, skip duplicate
+        updates[`tags/${tid}`] = { name: t.name, category: 'type', color: t.color || null, createdAt: t.createdAt || Date.now() };
+        existingTypeNames.set(t.name, tid);
+      } else {
+        updates[`tags/${tid}`] = null; // remove region tag from shared root path
+        updates[`trips/${newTripId}/tags/${tid}`] = { name: t.name, category: 'region', createdAt: t.createdAt || Date.now() };
       }
-      await set(ref(db, 'tags'), updates);
+    });
+
+    updates[`trips/${newTripId}/places`] = oldPlaces;
+    updates[`trips/${newTripId}/days`] = oldDays;
+    updates[`trips/${newTripId}/meta`] = {
+      title: oldTrip.title || '我的旅程',
+      eyebrow: oldTrip.eyebrow || '',
+      subtitle: oldTrip.subtitle || '',
+      createdAt: oldTrip.createdAt || Date.now(),
+      updatedAt: Date.now()
+    };
+    updates[`tripIndex/${newTripId}`] = {
+      title: oldTrip.title || '我的旅程',
+      order: 1000,
+      isDefault: state.tripIndex.length === 0,
+      createdAt: Date.now()
+    };
+    updates['places'] = null;
+    updates['days'] = null;
+    updates['trip'] = null;
+
+    await update(ref(db), updates);
+    state.legacyDataExists = false;
+    switchTrip(newTripId);
+    toast('遷移完成');
+  } catch(e) { toast('遷移失敗：' + e.message); }
+}
+window.migrateLegacyData = migrateLegacyData;
+
+/* ═══════════ Trip CRUD ═══════════ */
+async function createTrip() {
+  const title = document.getElementById('tm-new-title').value.trim();
+  if (!title) { toast('請輸入旅程名稱'); return; }
+  const eyebrow = document.getElementById('tm-new-eyebrow').value.trim();
+  const subtitle = document.getElementById('tm-new-subtitle').value.trim();
+  try {
+    const { db, ref, push, update } = window._fb;
+    const newRef = push(ref(db, 'tripIndex'));
+    const newId = newRef.key;
+    const isFirst = state.tripIndex.length === 0;
+    const maxOrder = Math.max(0, ...state.tripIndex.map(t => t.order || 0));
+    const updates = {};
+    updates[`trips/${newId}/meta`] = { title, eyebrow, subtitle, createdAt: Date.now(), updatedAt: Date.now() };
+    updates[`tripIndex/${newId}`] = { title, order: maxOrder + 1000, isDefault: isFirst, createdAt: Date.now() };
+    await update(ref(db), updates);
+    ['tm-new-title','tm-new-eyebrow','tm-new-subtitle'].forEach(id => document.getElementById(id).value = '');
+    switchTrip(newId);
+    toast('已建立旅程');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+window.createTrip = createTrip;
+
+async function duplicateTrip(tripId) {
+  try {
+    const { db, ref, get, push, update } = window._fb;
+    const snap = await get(ref(db, `trips/${tripId}`));
+    const data = snap.val();
+    if (!data) { toast('找不到旅程資料'); return; }
+    const newRef = push(ref(db, 'tripIndex'));
+    const newId = newRef.key;
+    const newTitle = ((data.meta && data.meta.title) || '未命名旅程') + '（複製）';
+    data.meta = { ...(data.meta || {}), title: newTitle, createdAt: Date.now(), updatedAt: Date.now() };
+    const maxOrder = Math.max(0, ...state.tripIndex.map(t => t.order || 0));
+    const updates = {};
+    updates[`trips/${newId}`] = data;
+    updates[`tripIndex/${newId}`] = { title: newTitle, order: maxOrder + 1000, isDefault: false, createdAt: Date.now() };
+    await update(ref(db), updates);
+    toast('已複製旅程');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+window.duplicateTrip = duplicateTrip;
+
+async function deleteTripAction(tripId) {
+  if (state.tripIndex.length <= 1) { toast('至少要保留一個旅程'); return; }
+  const t = state.tripIndex.find(x => x.id === tripId);
+  if (!confirm(`確定刪除旅程「${t ? t.title : ''}」？此旅程所有景點、行程都會一併刪除，無法復原。`)) return;
+  try {
+    const { db, ref, update } = window._fb;
+    const updates = {};
+    updates[`trips/${tripId}`] = null;
+    updates[`tripIndex/${tripId}`] = null;
+    if (t && t.isDefault) {
+      const other = state.tripIndex.find(x => x.id !== tripId);
+      if (other) updates[`tripIndex/${other.id}/isDefault`] = true;
     }
-    const tripSnap = await get(ref(db, 'trip'));
-    if (!tripSnap.exists()) {
-      await set(ref(db, 'trip'), {
-        title: '福岡行程查找',
-        eyebrow: 'Fukuoka Family Trip',
-        subtitle: '2026/8/4（二）— 8/10（一）',
-        createdAt: Date.now()
-      });
+    await update(ref(db), updates);
+    if (state.currentTripId === tripId) state.currentTripId = null; // resolveCurrentTrip() will re-pick
+    toast('已刪除旅程');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+window.deleteTripAction = deleteTripAction;
+
+async function setDefaultTrip(tripId) {
+  try {
+    const { db, ref, update } = window._fb;
+    const updates = {};
+    state.tripIndex.forEach(t => { updates[`tripIndex/${t.id}/isDefault`] = (t.id === tripId); });
+    await update(ref(db), updates);
+    toast('已設定預設旅程');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+window.setDefaultTrip = setDefaultTrip;
+
+function renderTripManagementTab() {
+  const migrateSection = document.getElementById('tm-migrate-section');
+  if (migrateSection) migrateSection.style.display = state.legacyDataExists ? 'block' : 'none';
+
+  const list = document.getElementById('tm-trip-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (state.tripIndex.length === 0) {
+    list.innerHTML = '<div class="empty">尚無旅程，請先於上方建立一個。</div>';
+    return;
+  }
+  state.tripIndex.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'trip-card';
+    const link = getFrontendUrlForTrip(t.id);
+    card.innerHTML = `
+      <div class="info">
+        <div class="title">${esc(t.title || '未命名旅程')}
+          ${t.isDefault ? '<span class="badge-default">預設</span>' : ''}
+          ${t.id === state.currentTripId ? '<span class="badge-current">目前使用中</span>' : ''}
+        </div>
+        <div class="sub trip-link" title="${escAttr(link)}">${esc(link)}</div>
+      </div>
+      <div class="actions">
+        <button class="btn small ghost" onclick="copyTripLink('${t.id}')">🔗 複製連結</button>
+        ${t.id !== state.currentTripId ? `<button class="btn small ghost" onclick="switchTrip('${t.id}')">切換</button>` : ''}
+        ${!t.isDefault ? `<button class="btn small ghost" onclick="setDefaultTrip('${t.id}')">設為預設</button>` : ''}
+        <button class="btn small ghost" onclick="duplicateTrip('${t.id}')">複製</button>
+        <button class="btn small danger" onclick="deleteTripAction('${t.id}')">刪除</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function getFrontendUrlForTrip(tripId) {
+  return new URL('index.html?trip=' + encodeURIComponent(tripId), location.href).href;
+}
+
+async function copyTripLink(tripId) {
+  const url = getFrontendUrlForTrip(tripId);
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('已複製分享連結');
+  } catch(e) {
+    // Clipboard API can be blocked in some contexts (e.g. non-HTTPS) — fall back to a manual-copy prompt.
+    window.prompt('請手動複製這個連結：', url);
+  }
+}
+window.copyTripLink = copyTripLink;
+
+/* ═══════════ First-run seeding (only for a genuinely empty DB) ═══════════ */
+async function maybeSeedFreshDb() {
+  const { db, ref, get, set } = window._fb;
+  try {
+    const [tripIndexSnap, legacyPlacesSnap, legacyTripSnap, tagsSnap] = await Promise.all([
+      get(ref(db, 'tripIndex')), get(ref(db, 'places')), get(ref(db, 'trip')), get(ref(db, 'tags'))
+    ]);
+    const pristine = !tripIndexSnap.exists() && !legacyPlacesSnap.exists() && !legacyTripSnap.exists() && !tagsSnap.exists();
+    if (!pristine) return; // real or legacy data present — never auto-seed over it
+
+    const defaults = ['文具','選物','玩具','景點','百貨公司','大型商場','美食'];
+    const updates = {};
+    const { push } = window._fb;
+    for (const name of defaults) {
+      const newRef = push(ref(db, 'tags'));
+      updates[newRef.key] = { name, category: 'type', createdAt: Date.now() };
     }
+    await set(ref(db, 'tags'), updates);
   } catch(e) {
     console.warn('Seed skipped:', e.message);
   }
@@ -827,10 +1317,12 @@ function makeAddTagInput(kind) {
   input.onkeydown = async (e) => {
     if (e.key !== 'Enter' || !input.value.trim()) return;
     const name = input.value.trim();
+    if (kind === 'region' && !requireCurrentTrip()) return;
     if (state.tags.some(t => t.category === kind && t.name === name)) { toast('已有同名標籤'); return; }
     try {
       const { db, ref, push, set } = window._fb;
-      const newRef = push(ref(db, 'tags'));
+      const path = kind === 'type' ? 'tags' : `trips/${state.currentTripId}/tags`;
+      const newRef = push(ref(db, path));
       await set(newRef, { name, category: kind, createdAt: Date.now() });
       const targetArr = (kind === 'type') ? state.selectedTypeTags : state.selectedRegionTags;
       if (!targetArr.includes(name)) targetArr.push(name);
@@ -842,6 +1334,7 @@ function makeAddTagInput(kind) {
 }
 
 async function savePlace() {
+  if (!requireCurrentTrip()) return;
   const name = document.getElementById('pl-name').value.trim();
   if (!name) { toast('請填名稱'); return; }
   const data = {
@@ -859,12 +1352,13 @@ async function savePlace() {
   };
   try {
     const { db, ref, push, set, update } = window._fb;
+    const placesPath = `trips/${state.currentTripId}/places`;
     if (state.editingPlaceId) {
-      await update(ref(db, 'places/' + state.editingPlaceId), data);
+      await update(ref(db, placesPath + '/' + state.editingPlaceId), data);
       toast('已更新');
     } else {
       data.createdAt = Date.now();
-      const newRef = push(ref(db, 'places'));
+      const newRef = push(ref(db, placesPath));
       await set(newRef, data);
       toast('已新增');
     }
@@ -946,12 +1440,13 @@ async function deletePlace(id) {
   if (!confirm(`確定刪除「${p.name}」？`)) return;
   try {
     const { db, ref, remove, update } = window._fb;
-    await remove(ref(db, 'places/' + id));
-    // Cascade: remove references from all slots
+    const tripId = state.currentTripId;
+    await remove(ref(db, `trips/${tripId}/places/${id}`));
+    // Cascade: remove references from all slots in this trip
     for (const day of state.days) {
       for (const s of day.slots) {
         if ((s.placeIds || []).includes(id)) {
-          await update(ref(db, `days/${day.id}/slots/${s.id}`),
+          await update(ref(db, `trips/${tripId}/days/${day.id}/slots/${s.id}`),
             { placeIds: (s.placeIds || []).filter(x => x !== id) });
         }
       }
@@ -966,6 +1461,9 @@ function renderTags() {
   const regionBox = document.getElementById('tg-regionlist');
   typeBox.innerHTML = ''; regionBox.innerHTML = '';
 
+  // Region tags are trip-scoped, so usage only ever needs to check current trip's places.
+  // Type tags are shared, so the badge here shows usage within THIS trip only (cheap, no cross-trip fetch);
+  // the actual delete cascade below still scans every trip to keep data consistent.
   const usage = (name, cat) => state.places.filter(p =>
     ((cat === 'type' ? p.typeTags : p.regionTags) || []).includes(name)
   ).length;
@@ -976,7 +1474,7 @@ function renderTags() {
     chip.className = `tagchip ${tag.category}`;
     if (tag.category === 'type') {
       chip.style.cursor = 'pointer';
-      chip.title = '點擊選擇顏色';
+      chip.title = '點擊選擇顏色（此旅程使用 ' + used + ' 次，可能其他旅程也有使用）';
       const dot = tag.color
         ? `<span class="cdot" style="background:${tag.color}"></span>`
         : `<span class="cdot empty"></span>`;
@@ -990,20 +1488,11 @@ function renderTags() {
     }
     chip.querySelector('.x').onclick = async (e) => {
       e.stopPropagation();
-      if (used > 0 && !confirm(`此標籤已被 ${used} 個景點使用，刪除會一併從那些景點移除。確定？`)) return;
-      if (used === 0 && !confirm(`確定刪除標籤「${tag.name}」？`)) return;
-      try {
-        const { db, ref, remove, update } = window._fb;
-        await remove(ref(db, 'tags/' + tag.id));
-        const field = tag.category === 'type' ? 'typeTags' : 'regionTags';
-        for (const p of state.places) {
-          const arr = p[field] || [];
-          if (arr.includes(tag.name)) {
-            await update(ref(db, 'places/' + p.id), { [field]: arr.filter(x => x !== tag.name) });
-          }
-        }
-        toast('已刪除');
-      } catch(err) { toast('失敗：' + err.message); }
+      if (tag.category === 'region') {
+        await deleteRegionTag(tag, used);
+      } else {
+        await deleteTypeTag(tag);
+      }
     };
     box.appendChild(chip);
   };
@@ -1011,14 +1500,59 @@ function renderTags() {
   state.tags.filter(t => t.category === 'region').forEach(t => build(t, regionBox));
 }
 
+async function deleteRegionTag(tag, used) {
+  if (!requireCurrentTrip()) return;
+  if (used > 0 && !confirm(`此標籤已被 ${used} 個景點使用，刪除會一併從那些景點移除。確定？`)) return;
+  if (used === 0 && !confirm(`確定刪除標籤「${tag.name}」？`)) return;
+  try {
+    const { db, ref, remove, update } = window._fb;
+    const tripId = state.currentTripId;
+    await remove(ref(db, `trips/${tripId}/tags/${tag.id}`));
+    for (const p of state.places) {
+      const arr = p.regionTags || [];
+      if (arr.includes(tag.name)) {
+        await update(ref(db, `trips/${tripId}/places/${p.id}`), { regionTags: arr.filter(x => x !== tag.name) });
+      }
+    }
+    toast('已刪除');
+  } catch(err) { toast('失敗：' + err.message); }
+}
+
+async function deleteTypeTag(tag) {
+  // Shared tag — must scan every trip's places, not just the current one.
+  try {
+    const { db, ref, get, remove, update } = window._fb;
+    const tripsSnap = await get(ref(db, 'trips'));
+    const trips = tripsSnap.val() || {};
+    let totalUsed = 0;
+    const affected = []; // {tripId, placeId, arr}
+    Object.entries(trips).forEach(([tripId, t]) => {
+      Object.entries(t.places || {}).forEach(([placeId, p]) => {
+        const arr = p.typeTags || [];
+        if (arr.includes(tag.name)) { totalUsed++; affected.push({ tripId, placeId, arr }); }
+      });
+    });
+    if (totalUsed > 0 && !confirm(`此標籤已在所有旅程中共被 ${totalUsed} 個景點使用，刪除會一併從那些景點移除（含其他旅程）。確定？`)) return;
+    if (totalUsed === 0 && !confirm(`確定刪除標籤「${tag.name}」？`)) return;
+
+    await remove(ref(db, 'tags/' + tag.id));
+    for (const { tripId, placeId, arr } of affected) {
+      await update(ref(db, `trips/${tripId}/places/${placeId}`), { typeTags: arr.filter(x => x !== tag.name) });
+    }
+    toast('已刪除');
+  } catch(err) { toast('失敗：' + err.message); }
+}
+
 async function addTag(cat) {
   const input = document.getElementById(cat === 'type' ? 'tg-newtype' : 'tg-newregion');
   const name = input.value.trim();
   if (!name) return;
+  if (cat === 'region' && !requireCurrentTrip()) return;
   if (state.tags.some(t => t.category === cat && t.name === name)) { toast('已有同名標籤'); return; }
   try {
     const { db, ref, push, set } = window._fb;
-    const newRef = push(ref(db, 'tags'));
+    const path = cat === 'type' ? 'tags' : `trips/${state.currentTripId}/tags`;
+    const newRef = push(ref(db, path));
     await set(newRef, { name, category: cat, createdAt: Date.now() });
     input.value = '';
     toast('已新增');
@@ -1027,16 +1561,18 @@ async function addTag(cat) {
 
 /* ═══════════ Itinerary ═══════════ */
 async function addDay(withDefaultSlots) {
+  if (!requireCurrentTrip()) return;
   const dayNumber = state.days.length + 1;
   const order = dayNumber * 1000;
   try {
     const { db, ref, push, set } = window._fb;
-    const newRef = push(ref(db, 'days'));
+    const daysPath = `trips/${state.currentTripId}/days`;
+    const newRef = push(ref(db, daysPath));
     const data = { dayNumber, order, date: '', createdAt: Date.now() };
     if (withDefaultSlots) {
       data.slots = {};
       ['上午','中午','下午','晚上'].forEach((label, i) => {
-        const slotRef = push(ref(db, 'days/' + newRef.key + '/slots'));
+        const slotRef = push(ref(db, daysPath + '/' + newRef.key + '/slots'));
         data.slots[slotRef.key] = { label, order: (i+1)*1000, placeIds: [], transitFromPrevious: '' };
       });
     }
@@ -1048,6 +1584,8 @@ async function addDay(withDefaultSlots) {
 function renderItinerary() {
   const container = document.getElementById('it-days');
   container.innerHTML = '';
+  const tripId = state.currentTripId;
+  const daysPath = `trips/${tripId}/days`;
 
   state.days.forEach(day => {
     const dayEl = document.createElement('div');
@@ -1062,6 +1600,7 @@ function renderItinerary() {
         <label style="margin:0;">日期</label>
         <input type="date" class="day-date" value="${dateStr}">
         <button class="btn small ghost" onclick="addSlot('${day.id}')">＋ 新時段</button>
+        <button class="btn small ghost" onclick="openJournalEditor('${day.id}')">📖 編輯今日日記</button>
         <button class="btn mini danger" style="margin-left:auto;" onclick="deleteDay('${day.id}')">刪除此日</button>
       </div>
       <div class="slots-container"></div>
@@ -1073,11 +1612,11 @@ function renderItinerary() {
       const val = parseInt(e.target.value, 10);
       if (isNaN(val)) return;
       const { db, ref, update } = window._fb;
-      await update(ref(db, 'days/' + day.id), { dayNumber: val });
+      await update(ref(db, daysPath + '/' + day.id), { dayNumber: val });
     };
     dayEl.querySelector('.day-date').onchange = async (e) => {
       const { db, ref, update } = window._fb;
-      await update(ref(db, 'days/' + day.id), { date: e.target.value });
+      await update(ref(db, daysPath + '/' + day.id), { date: e.target.value });
     };
 
     Sortable.create(slotsContainer, {
@@ -1086,7 +1625,7 @@ function renderItinerary() {
         const ids = [...slotsContainer.querySelectorAll('.slot-editor')].map(el => el.dataset.slotId);
         const { db, ref, update } = window._fb;
         const updates = {};
-        ids.forEach((sid, i) => { updates[`days/${day.id}/slots/${sid}/order`] = (i+1)*1000; });
+        ids.forEach((sid, i) => { updates[`${daysPath}/${day.id}/slots/${sid}/order`] = (i+1)*1000; });
         await update(ref(db), updates);
       }
     });
@@ -1100,7 +1639,7 @@ function renderItinerary() {
       const ids = [...container.querySelectorAll('.day-editor')].map(el => el.dataset.dayId);
       const { db, ref, update } = window._fb;
       const updates = {};
-      ids.forEach((did, i) => { updates[`days/${did}/order`] = (i+1)*1000; });
+      ids.forEach((did, i) => { updates[`${daysPath}/${did}/order`] = (i+1)*1000; });
       await update(ref(db), updates);
     }
   });
@@ -1110,6 +1649,7 @@ function renderSlotEditor(dayId, slot) {
   const el = document.createElement('div');
   el.className = 'slot-editor';
   el.dataset.slotId = slot.id;
+  const slotPath = `trips/${state.currentTripId}/days/${dayId}/slots/${slot.id}`;
 
   const places = (slot.placeIds || []).map(pid => state.places.find(p => p.id === pid)).filter(Boolean);
   const pills = places.map(p =>
@@ -1128,11 +1668,11 @@ function renderSlotEditor(dayId, slot) {
   `;
   el.querySelector('.slot-label').onchange = async (e) => {
     const { db, ref, update } = window._fb;
-    await update(ref(db, `days/${dayId}/slots/${slot.id}`), { label: e.target.value });
+    await update(ref(db, slotPath), { label: e.target.value });
   };
   el.querySelector('.slot-transit').onchange = async (e) => {
     const { db, ref, update } = window._fb;
-    await update(ref(db, `days/${dayId}/slots/${slot.id}`), { transitFromPrevious: e.target.value });
+    await update(ref(db, slotPath), { transitFromPrevious: e.target.value });
   };
   // Drag-reorder places within this slot
   Sortable.create(el.querySelector('.slot-places'), {
@@ -1140,7 +1680,7 @@ function renderSlotEditor(dayId, slot) {
     onEnd: async () => {
       const newOrder = [...el.querySelectorAll('.slot-place-pill')].map(pill => pill.dataset.pid);
       const { db, ref, update } = window._fb;
-      await update(ref(db, `days/${dayId}/slots/${slot.id}`), { placeIds: newOrder });
+      await update(ref(db, slotPath), { placeIds: newOrder });
     }
   });
   return el;
@@ -1151,7 +1691,7 @@ async function removePlaceFromSlot(dayId, slotId, placeId) {
   const slot = day?.slots.find(s => s.id === slotId);
   if (!slot) return;
   const { db, ref, update } = window._fb;
-  await update(ref(db, `days/${dayId}/slots/${slotId}`),
+  await update(ref(db, `trips/${state.currentTripId}/days/${dayId}/slots/${slotId}`),
     { placeIds: (slot.placeIds || []).filter(x => x !== placeId) });
 }
 
@@ -1159,22 +1699,27 @@ async function addSlot(dayId) {
   const day = state.days.find(d => d.id === dayId);
   const nextOrder = ((day?.slots.slice(-1)[0]?.order) || 0) + 1000;
   const { db, ref, push, set } = window._fb;
-  const slotRef = push(ref(db, 'days/' + dayId + '/slots'));
+  const slotRef = push(ref(db, `trips/${state.currentTripId}/days/${dayId}/slots`));
   await set(slotRef, { label: '新時段', order: nextOrder, placeIds: [], transitFromPrevious: '' });
 }
 
 async function deleteSlot(dayId, slotId) {
   if (!confirm('刪除此時段？')) return;
   const { db, ref, remove } = window._fb;
-  await remove(ref(db, `days/${dayId}/slots/${slotId}`));
+  await remove(ref(db, `trips/${state.currentTripId}/days/${dayId}/slots/${slotId}`));
 }
 
 async function deleteDay(dayId) {
   const day = state.days.find(d => d.id === dayId);
   if (!day) return;
-  if (!confirm(`刪除 Day ${day.dayNumber}？此日的所有時段也會一併刪除。`)) return;
-  const { db, ref, remove } = window._fb;
-  await remove(ref(db, 'days/' + dayId));
+  if (!confirm(`刪除 Day ${day.dayNumber}？此日的所有時段與日記也會一併刪除。`)) return;
+  const { db, ref, update } = window._fb;
+  const tripId = state.currentTripId;
+  const updates = {};
+  updates[`trips/${tripId}/days/${dayId}`] = null;
+  updates[`trips/${tripId}/dayJournalPhotos/${dayId}`] = null;
+  await update(ref(db), updates);
+  if (state.journalEditor.open && state.journalEditor.dayId === dayId) closeJournalEditor();
   toast('已刪除');
 }
 
@@ -1201,7 +1746,7 @@ async function confirmPicker() {
   const { dayId, slotId, tempSelected } = state.picker;
   try {
     const { db, ref, update } = window._fb;
-    await update(ref(db, `days/${dayId}/slots/${slotId}`), { placeIds: [...tempSelected] });
+    await update(ref(db, `trips/${state.currentTripId}/days/${dayId}/slots/${slotId}`), { placeIds: [...tempSelected] });
     closePicker();
     toast('已更新時段');
   } catch(e) { toast('失敗：' + e.message); }
@@ -1278,16 +1823,279 @@ function renderTripTab() {
   document.getElementById('tr-subtitle').value = t.subtitle || '';
 }
 async function saveTrip() {
+  if (!requireCurrentTrip()) return;
   try {
     const { db, ref, update } = window._fb;
-    await update(ref(db, 'trip'), {
-      eyebrow: document.getElementById('tr-eyebrow').value.trim(),
-      title: document.getElementById('tr-title').value.trim(),
-      subtitle: document.getElementById('tr-subtitle').value.trim(),
-      updatedAt: Date.now()
-    });
+    const title = document.getElementById('tr-title').value.trim();
+    const tripId = state.currentTripId;
+    const updates = {};
+    updates[`trips/${tripId}/meta/eyebrow`] = document.getElementById('tr-eyebrow').value.trim();
+    updates[`trips/${tripId}/meta/title`] = title;
+    updates[`trips/${tripId}/meta/subtitle`] = document.getElementById('tr-subtitle').value.trim();
+    updates[`trips/${tripId}/meta/updatedAt`] = Date.now();
+    updates[`tripIndex/${tripId}/title`] = title; // keep switcher/list label in sync
+    await update(ref(db), updates);
     toast('已儲存');
   } catch(e) { toast('失敗：' + e.message); }
+}
+
+/* ═══════════ Smart paste (Google Maps share text) ═══════════ */
+function openSmartPaste() {
+  document.getElementById('sp-textarea').value = '';
+  renderSmartPastePreview();
+  document.getElementById('smartPaste').classList.add('open');
+  document.getElementById('sp-textarea').focus();
+}
+function closeSmartPaste() {
+  document.getElementById('smartPaste').classList.remove('open');
+}
+
+// Pure string parsing — no external calls. Handles the common Google Maps
+// mobile-share text shape:
+//   景點名稱
+//   https://maps.app.goo.gl/xxxxx
+//   地址
+//   ★評分 (數量)
+// The name is taken as the first non-URL/non-rating line, and the address as
+// the next one — this stays correct even if a paste has the address before
+// the link, since the link/rating lines are filtered out either way.
+function parseGoogleMapsPaste(text) {
+  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  const urlRegex = /https?:\/\/[^\s]*(?:google\.[a-z.]+\/maps|goo\.gl\/maps|maps\.app\.goo\.gl)[^\s]*/i;
+  const ratingRegex = /^(?:[★⭐]\s*\d(?:\.\d)?|\d(?:\.\d)?\s*[★⭐])\s*[·・]?\s*\(?[\d,]*\)?/;
+  const isNoise = (l) => urlRegex.test(l) || ratingRegex.test(l);
+
+  let gmapUrl = '';
+  for (const l of lines) {
+    const m = l.match(urlRegex);
+    if (m) { gmapUrl = m[0]; break; }
+  }
+
+  const contentLines = lines.filter(l => !isNoise(l));
+  const name = contentLines[0] || '';
+  const address = contentLines[1] || '';
+
+  return { name, gmapUrl, address };
+}
+
+function renderSmartPastePreview() {
+  const text = document.getElementById('sp-textarea').value;
+  const preview = document.getElementById('sp-preview');
+  if (!text.trim()) {
+    preview.innerHTML = '<div class="sp-preview-empty">貼上文字後，這裡會顯示解析結果預覽</div>';
+    return;
+  }
+  const parsed = parseGoogleMapsPaste(text);
+  const row = (label, val) => `
+    <div class="sp-row">
+      <span class="sp-label">${label}</span>
+      <span class="sp-val${val ? '' : ' empty'}">${val ? esc(val) : '（未偵測到）'}</span>
+    </div>`;
+  preview.innerHTML = row('名稱', parsed.name) + row('地址', parsed.address) + row('Google Maps', parsed.gmapUrl);
+}
+
+function applySmartPaste() {
+  const text = document.getElementById('sp-textarea').value;
+  const parsed = parseGoogleMapsPaste(text);
+  if (!parsed.name && !parsed.address && !parsed.gmapUrl) {
+    toast('沒有偵測到可用的內容，請確認貼上的格式');
+    return;
+  }
+  if (parsed.name) document.getElementById('pl-name').value = parsed.name;
+  if (parsed.address) document.getElementById('pl-address').value = parsed.address;
+  if (parsed.gmapUrl) document.getElementById('pl-gmap').value = parsed.gmapUrl;
+  closeSmartPaste();
+  toast('已填入，請確認欄位內容並補上標籤/備註');
+}
+window.openSmartPaste = openSmartPaste;
+window.closeSmartPaste = closeSmartPaste;
+window.renderSmartPastePreview = renderSmartPastePreview;
+window.applySmartPaste = applySmartPaste;
+
+/* ═══════════ Daily journal ═══════════ */
+function getDayPlaces(day) {
+  const seen = new Set();
+  const result = [];
+  (day.slots || []).forEach(s => {
+    (s.placeIds || []).forEach(pid => {
+      if (seen.has(pid)) return;
+      seen.add(pid);
+      const p = state.places.find(x => x.id === pid);
+      if (p) result.push(p);
+    });
+  });
+  return result;
+}
+
+function openJournalEditor(dayId) {
+  const day = state.days.find(d => d.id === dayId);
+  if (!day) return;
+  state.journalEditor.open = true;
+  state.journalEditor.dayId = dayId;
+  state.journalEditor.photos = [];
+  document.getElementById('je-day-label').textContent = `Day ${day.dayNumber ?? ''} 日記`;
+  document.getElementById('je-text').value = day.journal.text || '';
+  document.getElementById('journalEditor').classList.add('open');
+  renderJournalRatings();
+  renderJournalPhotos();
+  subscribeJournalPhotos(dayId);
+}
+
+function closeJournalEditor() {
+  state.journalEditor.open = false;
+  state.journalEditor.dayId = null;
+  state.journalEditor.photos = [];
+  document.getElementById('journalEditor').classList.remove('open');
+  if (journalPhotosUnsub) { journalPhotosUnsub(); journalPhotosUnsub = null; }
+}
+window.openJournalEditor = openJournalEditor;
+window.closeJournalEditor = closeJournalEditor;
+
+function renderJournalEditor() {
+  // Called when the underlying days data refreshes while the editor is open,
+  // so the rating list (which depends on current slot assignments) stays in sync.
+  if (!state.journalEditor.open) return;
+  const day = state.days.find(d => d.id === state.journalEditor.dayId);
+  if (!day) { closeJournalEditor(); return; }
+  renderJournalRatings();
+}
+
+function renderJournalRatings() {
+  const day = state.days.find(d => d.id === state.journalEditor.dayId);
+  const container = document.getElementById('je-ratings');
+  if (!day || !container) return;
+  const places = getDayPlaces(day);
+  container.innerHTML = '';
+  if (places.length === 0) {
+    container.innerHTML = '<div class="hint">這天尚未在時段中安排景點</div>';
+    return;
+  }
+  const ratings = day.journal.ratings || {};
+  places.forEach(p => {
+    const current = ratings[p.id] || 0;
+    const row = document.createElement('div');
+    row.className = 'je-rating-row';
+    const starsSpan = document.createElement('span');
+    starsSpan.className = 'je-stars';
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = 'je-star' + (i <= current ? ' filled' : '');
+      star.textContent = '★';
+      star.onclick = () => setJournalRating(day.id, p.id, i === current ? null : i);
+      starsSpan.appendChild(star);
+    }
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'je-rating-name';
+    nameSpan.textContent = p.name;
+    row.appendChild(nameSpan);
+    row.appendChild(starsSpan);
+    container.appendChild(row);
+  });
+}
+
+async function setJournalRating(dayId, placeId, value) {
+  try {
+    const { db, ref, set, remove } = window._fb;
+    const path = `trips/${state.currentTripId}/days/${dayId}/journal/ratings/${placeId}`;
+    if (value === null) await remove(ref(db, path));
+    else await set(ref(db, path), value);
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+async function saveJournalText() {
+  const dayId = state.journalEditor.dayId;
+  if (!dayId) return;
+  try {
+    const { db, ref, update } = window._fb;
+    const text = document.getElementById('je-text').value;
+    await update(ref(db, `trips/${state.currentTripId}/days/${dayId}/journal`), { text });
+  } catch(e) { toast('失敗：' + e.message); }
+}
+window.saveJournalText = saveJournalText;
+
+function subscribeJournalPhotos(dayId) {
+  if (journalPhotosUnsub) { journalPhotosUnsub(); journalPhotosUnsub = null; }
+  const { db, ref, onValue } = window._fb;
+  journalPhotosUnsub = onValue(ref(db, `trips/${state.currentTripId}/dayJournalPhotos/${dayId}`), snap => {
+    const data = snap.val() || {};
+    state.journalEditor.photos = Object.entries(data).map(([id, v]) => ({ id, ...v }))
+      .sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+    renderJournalPhotos();
+  });
+}
+
+function renderJournalPhotos() {
+  const container = document.getElementById('je-photos');
+  if (!container) return;
+  const photos = state.journalEditor.photos;
+  container.innerHTML = '';
+  photos.forEach(p => {
+    const thumb = document.createElement('div');
+    thumb.className = 'je-photo-thumb';
+    thumb.innerHTML = `<img src="${escAttr(p.base64)}" alt=""><span class="je-photo-x" title="刪除">✕</span>`;
+    thumb.querySelector('.je-photo-x').onclick = () => deleteJournalPhoto(p.id);
+    container.appendChild(thumb);
+  });
+}
+
+async function compressImageLongEdge(file, maxEdge = 1600, quality = 0.82) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch(e) {
+    bitmap = await createImageBitmap(file);
+  }
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  if (bitmap.close) bitmap.close();
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+async function handleJournalPhotoUpload(event) {
+  const files = Array.from(event.target.files || []).filter(f => f.type.startsWith('image/'));
+  const dayId = state.journalEditor.dayId;
+  event.target.value = '';
+  if (files.length === 0 || !dayId) return;
+  toast(`處理 ${files.length} 張照片中…`);
+  const { db, ref, push, set } = window._fb;
+  let okCount = 0;
+  for (const file of files) {
+    try {
+      const dataUrl = await compressImageLongEdge(file, 1600, 0.82);
+      const photoRef = push(ref(db, `trips/${state.currentTripId}/dayJournalPhotos/${dayId}`));
+      await set(photoRef, { base64: dataUrl, createdAt: Date.now() });
+      okCount++;
+    } catch(e) { console.warn('照片處理失敗:', e.message); }
+  }
+  await syncJournalPhotoCount(dayId);
+  toast(okCount === files.length ? '照片已新增' : `已新增 ${okCount}/${files.length} 張，部分失敗`);
+}
+window.handleJournalPhotoUpload = handleJournalPhotoUpload;
+
+async function deleteJournalPhoto(photoId) {
+  const dayId = state.journalEditor.dayId;
+  if (!dayId) return;
+  if (!confirm('確定刪除這張照片？')) return;
+  try {
+    const { db, ref, remove } = window._fb;
+    await remove(ref(db, `trips/${state.currentTripId}/dayJournalPhotos/${dayId}/${photoId}`));
+    await syncJournalPhotoCount(dayId);
+    toast('已刪除');
+  } catch(e) { toast('失敗：' + e.message); }
+}
+
+async function syncJournalPhotoCount(dayId) {
+  try {
+    const { db, ref, get, update } = window._fb;
+    const snap = await get(ref(db, `trips/${state.currentTripId}/dayJournalPhotos/${dayId}`));
+    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+    await update(ref(db, `trips/${state.currentTripId}/days/${dayId}/journal`), { photoCount: count });
+  } catch(e) { console.warn('照片計數同步失敗:', e.message); }
 }
 
 /* ═══════════ Image upload ═══════════ */
@@ -1354,7 +2162,7 @@ async function exportData() {
     const snap = await get(ref(db, '/'));
     const data = snap.val() || {};
     const payload = {
-      _meta: { exportedAt: new Date().toISOString(), version: 1 },
+      _meta: { exportedAt: new Date().toISOString(), version: 2 },
       ...data
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -1386,7 +2194,9 @@ async function handleImport(event) {
     const { _meta, ...body } = data;
     const { db, ref, set } = window._fb;
     await set(ref(db, '/'), body);
-    toast('已匯入資料');
+    toast('已匯入資料，正在重新載入…');
+    sessionStorage.removeItem('currentTripId');
+    setTimeout(() => location.reload(), 800);
   } catch(e) { toast('匯入失敗：' + e.message); }
 }
 
