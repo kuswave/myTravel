@@ -928,6 +928,7 @@ function switchTrip(tripId) {
   if (tripId) sessionStorage.setItem('currentTripId', tripId);
   else sessionStorage.removeItem('currentTripId');
 
+  closeJournalEditor(); // never leave the journal editor pointing at a dayId from the trip we just left
   unsubscribeTripData();
   clearPlaceForm(); // avoid stale in-progress edits leaking across trips
   document.getElementById('frontendLink').href = tripId ? `index.html?trip=${encodeURIComponent(tripId)}` : 'index.html';
@@ -1119,7 +1120,8 @@ async function duplicateTrip(tripId) {
     updates[`trips/${newId}`] = data;
     updates[`tripIndex/${newId}`] = { title: newTitle, order: maxOrder + 1000, isDefault: false, createdAt: Date.now() };
     await update(ref(db), updates);
-    toast('已複製旅程');
+    switchTrip(newId);
+    toast('已複製旅程，已切換過去');
   } catch(e) { toast('失敗：' + e.message); }
 }
 window.duplicateTrip = duplicateTrip;
@@ -1965,12 +1967,22 @@ function renderJournalRatings() {
   const container = document.getElementById('je-ratings');
   if (!day || !container) return;
   const places = getDayPlaces(day);
+  const placeIdSet = new Set(places.map(p => p.id));
+  const ratings = day.journal.ratings || {};
+
+  // Self-heal: a rating whose place was removed from every slot this day is
+  // orphaned data — it no longer shows here, but was still visible on the
+  // frontend since that page didn't cross-check current slot assignments.
+  // Clear it out now that we can see it's stale.
+  Object.keys(ratings).forEach(pid => {
+    if (!placeIdSet.has(pid)) setJournalRating(day.id, pid, null);
+  });
+
   container.innerHTML = '';
   if (places.length === 0) {
     container.innerHTML = '<div class="hint">這天尚未在時段中安排景點</div>';
     return;
   }
-  const ratings = day.journal.ratings || {};
   places.forEach(p => {
     const current = ratings[p.id] || 0;
     const row = document.createElement('div');
