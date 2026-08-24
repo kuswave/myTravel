@@ -598,9 +598,17 @@ function renderItineraryView() {
 }
 
 /* ═══════════ Daily journal (collapsible, lazy-loaded photos) ═══════════ */
+function getDayPlaceIds(day) {
+  const ids = new Set();
+  (day.slots || []).forEach(s => (s.placeIds || []).forEach(pid => ids.add(pid)));
+  return ids;
+}
+
 function hasJournalContent(day) {
   const j = day.journal || {};
-  return !!(j.text && j.text.trim()) || Object.keys(j.ratings || {}).length > 0 || (j.photoCount || 0) > 0;
+  const dayPlaceIds = getDayPlaceIds(day);
+  const validRatingCount = Object.keys(j.ratings || {}).filter(pid => dayPlaceIds.has(pid)).length;
+  return !!(j.text && j.text.trim()) || validRatingCount > 0 || (j.photoCount || 0) > 0;
 }
 
 function renderJournalBlock(day) {
@@ -636,7 +644,8 @@ function renderJournalBlock(day) {
       p.textContent = j.text;
       body.appendChild(p);
     }
-    const ratingEntries = Object.entries(j.ratings || {});
+    const dayPlaceIds = getDayPlaceIds(day);
+    const ratingEntries = Object.entries(j.ratings || {}).filter(([placeId]) => dayPlaceIds.has(placeId));
     if (ratingEntries.length > 0) {
       const box = document.createElement('div');
       box.className = 'journal-ratings';
