@@ -10,7 +10,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-  import { getDatabase, ref, onValue }
+  import { getDatabase, ref, onValue, get }
     from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -25,7 +25,7 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
-  window._fb = { db, ref, onValue };
+  window._fb = { db, ref, onValue, get };
 
   function startApp() {
     if (typeof window.onFirebaseReady === 'function') window.onFirebaseReady();
@@ -275,6 +275,33 @@ h1{font-size:clamp(24px,5vw,34px);margin:0 0 4px;}
 .search-view-header strong{color:var(--ink);font-weight:700;}
 
 .empty{text-align:center;padding:40px 20px;color:var(--ink-soft);font-size:14px;}
+
+/* Daily journal */
+.journal-wrap{margin-bottom:18px;border-top:1px dashed var(--line);padding-top:12px;}
+.journal-toggle{
+  cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:13px;color:var(--ink);user-select:none;
+}
+.journal-toggle::before{content:"▸";display:inline-block;transition:transform .12s ease;color:var(--ok);flex-shrink:0;}
+.journal-toggle.open::before{transform:rotate(90deg);}
+.journal-toggle-label{font-weight:700;font-family:'Shippori Mincho',serif;flex-shrink:0;}
+.journal-preview{
+  color:var(--ink-soft);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.journal-photo-hint{color:var(--ink-soft);font-size:12px;flex-shrink:0;}
+.journal-body{display:none;margin-top:12px;padding-left:18px;}
+.journal-body.open{display:block;}
+.journal-text{font-size:13.5px;line-height:1.8;white-space:pre-wrap;margin-bottom:14px;color:var(--ink);}
+.journal-ratings{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.journal-rating-row{display:flex;justify-content:space-between;font-size:12.5px;gap:12px;}
+.journal-rating-name{color:var(--ink-soft);}
+.journal-rating-stars{color:var(--accent);letter-spacing:1px;flex-shrink:0;}
+.journal-photo-loading{font-size:12px;color:var(--ink-mid);}
+.journal-photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(min-width:640px){.journal-photo-grid{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:1000px){.journal-photo-grid{grid-template-columns:repeat(4,1fr);}}
+.journal-photo-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;cursor:zoom-in;display:block;}
 </style>
 </head>
 <body>
@@ -310,47 +337,106 @@ h1{font-size:clamp(24px,5vw,34px);margin:0 0 4px;}
 <script>
 const state = {
   mode: 'itinerary',   // 'itinerary' | 'search'
+  tripId: null,
   trip: null,
   places: [],
-  tags: [],
+  typeTags: [],     // shared across trips, from /tags
+  regionTags: [],   // scoped to current trip, from /trips/{id}/tags
+  tags: [],         // merged typeTags + regionTags for existing render code
   days: [],
   activeDay: null,
   activeTypes: new Set(),
   activeRegions: new Set(),
   query: '',
-  openAlts: new Set()
+  openAlts: new Set(),
+  openJournals: new Set(),  // dayIds currently expanded
+  journalPhotosCache: {}    // dayId -> array once lazy-loaded (undefined = not requested yet)
 };
+
+let tripUnsubs = [];
+function unsubscribeTripData() {
+  tripUnsubs.forEach(u => { if (u) u(); });
+  tripUnsubs = [];
+}
+function rebuildTags() {
+  state.tags = [...state.typeTags, ...state.regionTags];
+}
 
 window.onFirebaseReady = function() {
   const { db, ref, onValue } = window._fb;
 
-  onValue(ref(db, 'trip'), snap => {
+  // Shared type tags (root, across all trips)
+  onValue(ref(db, 'tags'), snap => {
+    const data = snap.val() || {};
+    state.typeTags = Object.entries(data).map(([id, v]) => ({ id, ...v, category: 'type' }));
+    rebuildTags();
+    renderChips();
+    render();
+  });
+
+  const urlTripId = new URLSearchParams(location.search).get('trip');
+  if (urlTripId) {
+    loadTrip(urlTripId);
+  } else {
+    // No ?trip= param: resolve the default trip from the lightweight index
+    onValue(ref(db, 'tripIndex'), snap => {
+      const data = snap.val() || {};
+      const list = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+      if (list.length === 0) {
+        state.tripId = null;
+        showNoTripState();
+        return;
+      }
+      const def = list.find(t => t.isDefault) || list[0];
+      if (def.id !== state.tripId) loadTrip(def.id);
+    }, { onlyOnce: false });
+  }
+};
+
+function loadTrip(tripId) {
+  if (state.tripId === tripId) return;
+  state.tripId = tripId;
+  unsubscribeTripData();
+  const { db, ref, onValue } = window._fb;
+
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/meta`), snap => {
     state.trip = snap.val() || null;
     renderHeader();
-  });
-  onValue(ref(db, 'places'), snap => {
+  }));
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/tags`), snap => {
+    const data = snap.val() || {};
+    state.regionTags = Object.entries(data).map(([id, v]) => ({ id, ...v, category: 'region' }));
+    rebuildTags();
+    renderChips();
+    render();
+  }));
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/places`), snap => {
     const data = snap.val() || {};
     state.places = Object.entries(data).map(([id, v]) => ({ id, ...v }));
     render();
-  });
-  onValue(ref(db, 'tags'), snap => {
-    const data = snap.val() || {};
-    state.tags = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-    renderChips();
-    render(); // Re-render places since color may have changed
-  });
-  onValue(ref(db, 'days'), snap => {
+  }));
+  tripUnsubs.push(onValue(ref(db, `trips/${tripId}/days`), snap => {
     const data = snap.val() || {};
     state.days = Object.entries(data).map(([id, v]) => {
       const slotsObj = v.slots || {};
       const slots = Object.entries(slotsObj).map(([sid, sv]) => ({ id: sid, ...sv }))
         .sort((a,b) => (a.order||0) - (b.order||0));
-      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots };
+      const jRaw = v.journal || {};
+      const journal = { text: jRaw.text || '', ratings: jRaw.ratings || {}, photoCount: jRaw.photoCount || 0 };
+      return { id, dayNumber: v.dayNumber, date: v.date || '', order: v.order || 0, slots, journal };
     }).sort((a,b) => (a.order||0) - (b.order||0));
     renderLineMap();
     render();
-  });
-};
+  }));
+}
+
+function showNoTripState() {
+  document.getElementById('tripTitle').textContent = '尚無旅程資料';
+  document.getElementById('tripSub').textContent = '請確認網址的 ?trip= 參數，或請規劃者建立旅程';
+  document.getElementById('content').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('emptyState').textContent = '找不到任何旅程資料';
+}
 
 function setMode(mode) {
   state.mode = mode;
@@ -504,9 +590,102 @@ function renderItineraryView() {
         <h2>Day ${day.dayNumber ?? ''}</h2>
         ${day.date ? `<span class="date">${formatDate(day.date)}</span>` : ''}
       </div>`;
+    const journalEl = renderJournalBlock(day);
+    if (journalEl) dayBlock.appendChild(journalEl);
     day.slots.forEach(slot => dayBlock.appendChild(renderSlot(slot)));
     content.appendChild(dayBlock);
   });
+}
+
+/* ═══════════ Daily journal (collapsible, lazy-loaded photos) ═══════════ */
+function hasJournalContent(day) {
+  const j = day.journal || {};
+  return !!(j.text && j.text.trim()) || Object.keys(j.ratings || {}).length > 0 || (j.photoCount || 0) > 0;
+}
+
+function renderJournalBlock(day) {
+  if (!hasJournalContent(day)) return null;
+  const j = day.journal || {};
+  const isOpen = state.openJournals.has(day.id);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'journal-wrap';
+
+  const toggle = document.createElement('div');
+  toggle.className = 'journal-toggle' + (isOpen ? ' open' : '');
+  const text = (j.text || '').trim();
+  const preview = text.length > 100 ? text.slice(0, 100) + '…' : text;
+  const photoHint = (j.photoCount || 0) > 0 ? `<span class="journal-photo-hint">📷 ${j.photoCount} 張照片</span>` : '';
+  toggle.innerHTML = `<span class="journal-toggle-label">📖 心得</span>${preview ? `<span class="journal-preview">${esc(preview)}</span>` : ''}${photoHint}`;
+  toggle.onclick = () => {
+    if (isOpen) state.openJournals.delete(day.id);
+    else {
+      state.openJournals.add(day.id);
+      ensureJournalPhotosLoaded(day.id);
+    }
+    render();
+  };
+  wrap.appendChild(toggle);
+
+  const body = document.createElement('div');
+  body.className = 'journal-body' + (isOpen ? ' open' : '');
+  if (isOpen) {
+    if (text) {
+      const p = document.createElement('div');
+      p.className = 'journal-text';
+      p.textContent = j.text;
+      body.appendChild(p);
+    }
+    const ratingEntries = Object.entries(j.ratings || {});
+    if (ratingEntries.length > 0) {
+      const box = document.createElement('div');
+      box.className = 'journal-ratings';
+      ratingEntries.forEach(([placeId, stars]) => {
+        const place = state.places.find(p => p.id === placeId);
+        if (!place) return;
+        const row = document.createElement('div');
+        row.className = 'journal-rating-row';
+        const starStr = '★'.repeat(stars) + '☆'.repeat(Math.max(0, 5 - stars));
+        row.innerHTML = `<span class="journal-rating-name">${esc(place.name)}</span><span class="journal-rating-stars">${starStr}</span>`;
+        box.appendChild(row);
+      });
+      body.appendChild(box);
+    }
+    const photos = state.journalPhotosCache[day.id];
+    if (!photos) {
+      const loading = document.createElement('div');
+      loading.className = 'journal-photo-loading';
+      loading.textContent = '照片載入中…';
+      body.appendChild(loading);
+    } else if (photos.length > 0) {
+      const grid = document.createElement('div');
+      grid.className = 'journal-photo-grid';
+      photos.forEach(ph => {
+        const img = document.createElement('img');
+        img.src = ph.base64;
+        img.loading = 'lazy';
+        img.alt = '';
+        grid.appendChild(img);
+      });
+      body.appendChild(grid);
+    }
+  }
+  wrap.appendChild(body);
+  return wrap;
+}
+
+async function ensureJournalPhotosLoaded(dayId) {
+  if (state.journalPhotosCache[dayId]) return; // already loaded
+  const { db, ref, get } = window._fb;
+  try {
+    const snap = await get(ref(db, `trips/${state.tripId}/dayJournalPhotos/${dayId}`));
+    const data = snap.val() || {};
+    state.journalPhotosCache[dayId] = Object.entries(data).map(([id, v]) => ({ id, ...v }))
+      .sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  } catch(e) {
+    state.journalPhotosCache[dayId] = [];
+  }
+  if (state.openJournals.has(dayId)) render();
 }
 
 function renderSearchView() {
@@ -701,7 +880,7 @@ function closeLightbox() {
   document.getElementById('lightboxImg').src = '';
 }
 document.addEventListener('click', (e) => {
-  const img = e.target.closest('.pcard-image img');
+  const img = e.target.closest('.pcard-image img, .journal-photo-grid img');
   if (img) {
     e.preventDefault();
     openLightbox(img.src);
